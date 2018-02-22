@@ -11,20 +11,23 @@ class VariableTypeEnum(Enum):
     Unknown=100
     
 class VariableRoleEnum(Enum):
-    Predictor=1
-    Target=2
-    DateID=3
-    Unknown=100
+    REJECTED = 1
+    FIXED_RULE = 2 
+    HISTORICAL_RULE = 3
+    POTENCIAL_RULE = 4
+    NTU = 5
+    Target = 99
+    Unknown = 100
     
 class VariableDescription(object):
     
-    def __init__(self, variable_name:str, variable_type:VariableTypeEnum = VariableTypeEnum.Unknown , variable_role:VariableRoleEnum = VariableRoleEnum.Unknown):
+    def __init__(self, variable_name, variable_type = VariableTypeEnum.Unknown , variable_role= VariableRoleEnum.Unknown):
         self.name=variable_name
         self.type=variable_type
         self.role=variable_role
         
 
-def types_and_roles_prediction(file_path:str, delimiter:str=';', decimal:str='.'):
+def types_and_roles_prediction(file_path, delimiter=';', decimal='.'):
     """
     Возвращает информацию по переменным в файле
     
