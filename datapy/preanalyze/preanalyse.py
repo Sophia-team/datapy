@@ -24,7 +24,15 @@ class VariableDescription(object):
         self.role=variable_role
         
 
-def types_and_roles_prediction(file_path:str, delimiter:str=';', decimal:str='.'):    
+def types_and_roles_prediction(file_path:str, delimiter:str=';', decimal:str='.'):
+    """
+    Возвращает информацию по переменным в файле
+    
+    :param file_path: Путь к csv файлу
+    :param delimiter: Разделитель полей
+    :param decimal: Разделитель дробной отчасти
+    
+    """
     try:
         result=list()
         data=pd.read_csv(file_path, delimiter=delimiter, decimal=decimal)
@@ -35,11 +43,10 @@ def types_and_roles_prediction(file_path:str, delimiter:str=';', decimal:str='.'
             result.append(var_description)
         return result
     except:
-        raise
-        print('err')
+        #TODO подумать, что тут можно делать
         return None
-    return 0
 
+#определяет тип переменной
 def _predict_type(data_series):
     column_name=data_series.name
     column_type=data_series.dtype
@@ -58,7 +65,10 @@ def _predict_type(data_series):
             
         return VariableTypeEnum.Unknown
     else:  # обработка строковых (и дат - надо реализовать)
+        #TODO: распознавание дат
         return VariableTypeEnum.Nominal
-    
+
+#определяет роль переменной
 def _predict_role(data_series):
+    #TODO распознавание
     return VariableRoleEnum.Unknown
