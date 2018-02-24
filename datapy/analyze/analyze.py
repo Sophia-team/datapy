@@ -1,3 +1,6 @@
+import pandas as pd
+import numpy as np
+
 # возвращает списки имен по ролям
 def role_lists(types_and_roles):
     target = list()
@@ -24,7 +27,9 @@ def role_lists(types_and_roles):
 
 def analyse_marked_data(data_path, data_markers):
     target, rules, approved, ntu, credited, new_credit = role_lists(data_markers) 
-    data=pd.read_csv(data_path, delimiter=delimiter, decimal=decimal)
+    data = pd.read_csv(data_path, delimiter=delimiter, decimal=decimal)
+    columns = ['# отказов', '% отказов', 'дефолтность', '# новых кредитов', '% новых кредитов', 'уровень одобрения', 'уровень NTU',     'дефолтность по одобренным', 'дефолтноть по выданным']
+    df = pd.DataFrame(index=rules, columns=columns)
     
     
     #TODO написать тело
