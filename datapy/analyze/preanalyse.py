@@ -20,6 +20,7 @@ class VariableRoleEnum(Enum):
     DATE = 7
     CREDITED = 8
     APPROVED = 9
+    NEW_CREDIT = 10
     TARGET = 99
     UNKNOWN = 100
     
