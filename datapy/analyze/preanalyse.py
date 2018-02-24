@@ -16,12 +16,16 @@ class VariableRoleEnum(Enum):
     HISTORICAL_RULE = 3
     POTENCIAL_RULE = 4
     NTU = 5
-    Target = 99
-    Unknown = 100
+    ID = 6
+    DATE = 7
+    CREDITED = 8
+    APPROVED = 9
+    TARGET = 99
+    UNKNOWN = 100
     
 class VariableDescription(object):
     
-    def __init__(self, variable_name, variable_type = VariableTypeEnum.Unknown , variable_role= VariableRoleEnum.Unknown):
+    def __init__(self, variable_name, variable_type = VariableTypeEnum.Unknown , variable_role= VariableRoleEnum.UNKNOWN):
         self.name=variable_name
         self.type=variable_type
         self.role=variable_role
@@ -74,4 +78,4 @@ def _predict_type(data_series):
 #определяет роль переменной
 def _predict_role(data_series):
     #TODO распознавание
-    return VariableRoleEnum.Unknown
+    return VariableRoleEnum.UNKNOWN
