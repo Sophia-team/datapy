@@ -26,7 +26,29 @@ def types_and_roles_prediction(file_path, delimiter=';', decimal='.'):
 #Возвращает таблицу со статистикой по отказам и прочему
 def analyse_marked_data(data_path, data_markers, delimiter=';', decimal='.'):
     target, rules, approved, ntu, credited, new_credit = _role_lists(data_markers) 
-    data = pd.read_csv(data_path, delimiter=delimiter, decimal=decimal)
+    data = pd.read_csv(data_path, delimiter=delimiter, decimal=decimal)    
+    
+    #однофакторные отказы
+    one_factor_analysis = _rules_stats(data, target, rules, approved, ntu, credited, new_credit)
+    
+    #уникальные отказы
+    unique_factor_data=data.copy()
+    unique_factor_data['active_rules']=0
+    for rule in rules:
+        unique_factor_data['active_rules']+=unique_factor_data[rule]
+    unique_factor_data = unique_factor_data.loc[unique_factor_data['active_rules']==1]
+    unique_factor_analysis = _rules_stats(unique_factor_data, target, rules, approved, ntu, credited, new_credit)
+                                  
+    return one_factor_analysis, unique_factor_analysis
+
+
+
+###################################################
+## private методы
+####################################################
+
+#считает статистики по правилам
+def _rules_stats(data, target, rules, approved, ntu, credited, new_credit):
     columns = ['# отказов', '% отказов', 'дефолтность (%)', '# новых кредитов', '% новых кредитов', 'уровень одобрения', 'уровень NTU',     'дефолтность по одобренным', 'дефолтность по выданным (%)']
     df = pd.DataFrame(columns=columns)
     # для каждого правила заполняем таблицу
@@ -51,12 +73,6 @@ def analyse_marked_data(data_path, data_markers, delimiter=';', decimal='.'):
         df.loc[rule]=[rej_num,rej_share*100, dr*100, new_credits_num, new_credits_share, ar, ntu_rate, approved_dr*100, given_dr*100]
     
     return df
-
-
-
-###################################################
-## private методы
-####################################################
 
 # возвращает списки имен по ролям
 def _role_lists(types_and_roles):
