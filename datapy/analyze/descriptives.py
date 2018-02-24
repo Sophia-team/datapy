@@ -29,7 +29,7 @@ def analyse_marked_data(data_path, data_markers, delimiter=';', decimal='.'):
     data = pd.read_csv(data_path, delimiter=delimiter, decimal=decimal)
     columns = ['# отказов', '% отказов', 'дефолтность (%)', '# новых кредитов', '% новых кредитов', 'уровень одобрения', 'уровень NTU',     'дефолтность по одобренным', 'дефолтность по выданным (%)']
     df = pd.DataFrame(columns=columns)
-    
+    # для каждого правила заполняем таблицу
     for rule in rules:
         #Отказы: число и доля
         rej_num = data[rule].sum()
@@ -48,14 +48,8 @@ def analyse_marked_data(data_path, data_markers, delimiter=';', decimal='.'):
         # Дефолтность по выданным
         given_dr=None if (credited is None) or (target is None) else data.loc[(data[rule]==1) & (data[credited]==1), target].mean() 
        
-            
-
         df.loc[rule]=[rej_num,rej_share*100, dr*100, new_credits_num, new_credits_share, ar, ntu_rate, approved_dr*100, given_dr*100]
     
-    #TODO написать тело
-    '''историческая ситуация определяется переменными  FIXED RULE,  HISTORICAL RULE, NTU(опционально), TARGET, 
-    по этим данным надо посчитать число записей, уровень одобрения, уровень NTU(если есть), уровень риска по одобренным, 
-    уровень риска по выданным (если указано NTU) и  нужно отобразить однофакторные и уникальные отказы по исторической ситуации'''
     return df
 
 
