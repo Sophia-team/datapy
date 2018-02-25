@@ -122,5 +122,10 @@ def _predict_type(data_series):
 
 #определяет роль переменной
 def _predict_role(data_series):
+    column_name=data_series.name
+    if 'r_'==column_name[:2]:
+        return VariableRoleEnum.HISTORICAL_RULE
+    if 'CREDITED'==column_name.upper():
+        return VariableRoleEnum.CREDITED
     #TODO распознавание
     return VariableRoleEnum.UNKNOWN
