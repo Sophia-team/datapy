@@ -21,9 +21,10 @@ class VariableRoleEnum(Enum):
     NEW_CREDIT = 10
     TARGET = 99
     
+    
 class VariableDescription(object):
     
-    def __init__(self, variable_name, variable_type = VariableTypeEnum.Unknown , variable_role= VariableRoleEnum.UNKNOWN):
+    def __init__(self, variable_name, variable_type = VariableTypeEnum.Unknown , variable_role= VariableRoleEnum.REJECTED):
         self.name=variable_name
         self.type=variable_type
         self.role=variable_role

@@ -26,7 +26,10 @@ def types_and_roles_prediction(file_path, delimiter=';', decimal='.'):
 #Возвращает таблицу со статистикой по отказам и прочему
 def analyse_marked_data(data_path, data_markers, delimiter=';', decimal='.'):
     target, rules, approved, ntu, credited, new_credit = _role_lists(data_markers) 
-    data = pd.read_csv(data_path, delimiter=delimiter, decimal=decimal)    
+    data = pd.read_csv(data_path, delimiter=delimiter, decimal=decimal)   
+    
+    #опсиательные по всем данным
+    data_desctiption=_data_stats(data, target, approved, ntu, credited)
     
     #однофакторные отказы
     one_factor_analysis = _rules_stats(data, target, rules, approved, ntu, credited, new_credit)
@@ -39,7 +42,7 @@ def analyse_marked_data(data_path, data_markers, delimiter=';', decimal='.'):
     unique_factor_data = unique_factor_data.loc[unique_factor_data['active_rules']==1]
     unique_factor_analysis = _rules_stats(unique_factor_data, target, rules, approved, ntu, credited, new_credit)
                                   
-    return one_factor_analysis, unique_factor_analysis
+    return data_desctiption, one_factor_analysis, unique_factor_analysis
 
 
 
@@ -47,9 +50,25 @@ def analyse_marked_data(data_path, data_markers, delimiter=';', decimal='.'):
 ## private методы
 ####################################################
 
+def _data_stats(data, target, approved, ntu, credited):
+    columns=['уровень одобрения (%)', 'уровень NTU (%)', 'дефолтность по одобренным (%)', 'дефолтность по выданным (%)']
+    df = pd.DataFrame(columns=columns)    
+    # Approve rate
+    ar = None if approved is None else data[approved].mean()
+    # уровень NTU 
+    ntu_rate = None if ntu is None else data[ntu].mean()
+    # default rate among approved
+    approved_dr=None if (approved is None) or (target is None) else data.loc[(data[approved]==1),target].mean()  
+    # Дефолтность по выданным
+    given_dr=None if (credited is None) or (target is None) else data.loc[(data[credited]==1), target].mean() 
+    
+    df.loc['Total']=[ar*100, ntu_rate*100, approved_dr*100, given_dr*100]
+    
+    return df
+
 #считает статистики по правилам
 def _rules_stats(data, target, rules, approved, ntu, credited, new_credit):
-    columns = ['# отказов', '% отказов', 'дефолтность (%)', '# новых кредитов', '% новых кредитов', 'уровень одобрения', 'уровень NTU',     'дефолтность по одобренным', 'дефолтность по выданным (%)']
+    columns = ['# отказов', '% отказов', 'дефолтность (%)', '# новых кредитов', '% новых кредитов']
     df = pd.DataFrame(columns=columns)
     # для каждого правила заполняем таблицу
     for rule in rules:
@@ -61,16 +80,8 @@ def _rules_stats(data, target, rules, approved, ntu, credited, new_credit):
         #Новые кредиты: число и доля
         new_credits_num = None if new_credit is None else data.loc[data[rule]==1,new_credit].sum()
         new_credits_share = None if new_credit is None else data.loc[data[rule]==1,new_credit].mean()
-        # Approve rate
-        ar = None if approved is None else data.loc[data[rule]==1,approved].mean()
-        # уровень NTU 
-        ntu_rate = None if ntu is None else data.loc[data[rule]==1,ntu].mean()
-        # default rate among approved
-        approved_dr=None if (approved is None) or (target is None) else data.loc[(data[rule]==1) & (data[approved]==1),target].mean()  
-        # Дефолтность по выданным
-        given_dr=None if (credited is None) or (target is None) else data.loc[(data[rule]==1) & (data[credited]==1), target].mean() 
-       
-        df.loc[rule]=[rej_num,rej_share*100, dr*100, new_credits_num, new_credits_share, ar, ntu_rate, approved_dr*100, given_dr*100]
+             
+        df.loc[rule]=[rej_num,rej_share*100, dr*100, new_credits_num, new_credits_share]
     
     return df
 
