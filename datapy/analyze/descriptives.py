@@ -127,5 +127,13 @@ def _predict_role(data_series):
         return VariableRoleEnum.HISTORICAL_RULE
     if 'CREDITED'==column_name.upper():
         return VariableRoleEnum.CREDITED
+    if 'APPROVE' in column_name.upper():
+        return VariableRoleEnum.APPROVED
+    if 'TARGET' in column_name.upper() or 'OBJECTIVE' in column_name.upper():
+        return VariableRoleEnum.TARGET
+    if 'NEW_CREDIT' in column_name.upper():
+        return VariableRoleEnum.NEW_CREDIT
+    if 'NTU' in column_name.upper():
+        return VariableRoleEnum.NTU
     #TODO распознавание
-    return VariableRoleEnum.UNKNOWN
+    return VariableRoleEnum.REJECTED

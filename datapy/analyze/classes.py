@@ -20,7 +20,6 @@ class VariableRoleEnum(Enum):
     APPROVED = 9
     NEW_CREDIT = 10
     TARGET = 99
-    UNKNOWN = 100
     
 class VariableDescription(object):
     
