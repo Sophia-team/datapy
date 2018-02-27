@@ -40,7 +40,7 @@ def analyse_marked_data(data_path, data_markers, delimiter=';', decimal='.'):
     for rule in rules:
         unique_factor_data['active_rules']+=unique_factor_data[rule]
     unique_factor_data = unique_factor_data.loc[unique_factor_data['active_rules']==1]
-    unique_factor_analysis = _rules_stats(unique_factor_data, target, rules, approved, ntu, credited, new_credit)
+    unique_factor_analysis = _rules_stats(unique_factor_data, target, rules, approved, ntu, credited, new_credit, data.shape[0])
                                   
     return data_desctiption, one_factor_analysis, unique_factor_analysis
 
@@ -63,12 +63,14 @@ def _data_stats(data, target, approved, ntu, credited):
     given_dr=None if (credited is None) or (target is None) else data.loc[(data[credited]==1), target].mean() 
     
     df.loc['Total']=[ar*100, ntu_rate*100, approved_dr*100, given_dr*100]
-    
     return df
 
 #считает статистики по правилам
-def _rules_stats(data, target, rules, approved, ntu, credited, new_credit):
-    columns = ['# отказов', '% отказов', 'дефолтность (%)', '# новых кредитов', '% новых кредитов']
+def _rules_stats(data, target, rules, approved, ntu, credited, new_credit, full_data_len=None):
+    if full_data_len is None or full_data_len < 1:
+        columns = ['# отказов', '% отказов', 'дефолтность (%)', '# новых кредитов', '% новых кредитов']
+    else:
+        columns = ['# отказов', '% отказов от отказов по никальным правилам', '% отказов от общего числа', 'дефолтность (%)', '# новых кредитов', '% новых кредитов']
     df = pd.DataFrame(columns=columns)
     # для каждого правила заполняем таблицу
     for rule in rules:
@@ -77,12 +79,19 @@ def _rules_stats(data, target, rules, approved, ntu, credited, new_credit):
         rej_share = data[rule].mean()
         # default rate
         dr = None if target is None else data.loc[data[rule]==1,target].mean()
+        
         #Новые кредиты: число и доля
         new_credits_num = None if new_credit is None else data.loc[data[rule]==1,new_credit].sum()
         new_credits_share = None if new_credit is None else data.loc[data[rule]==1,new_credit].mean()
-             
-        df.loc[rule]=[rej_num,rej_share*100, dr*100, new_credits_num, new_credits_share]
-    
+        
+        
+        if full_data_len is None or full_data_len<1:
+            df.loc[rule]=[rej_num,rej_share*100, dr*100, new_credits_num, new_credits_share]
+        else:
+            # reject rate in full dataset
+            rej_share_total=rej_num/full_data_len
+            df.loc[rule]=[rej_num,rej_share*100, rej_share_total*100, dr*100, new_credits_num, new_credits_share]
+
     return df
 
 # возвращает списки имен по ролям
