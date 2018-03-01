@@ -89,7 +89,7 @@ def _rules_stats(data, target, rules, approved, ntu, credited, new_credit, full_
             df.loc[rule]=[rej_num,rej_share*100, dr*100, new_credits_num, new_credits_share]
         else:
             # reject rate in full dataset
-            rej_share_total=rej_num/full_data_len
+            rej_share_total=float(rej_num)/full_data_len
             df.loc[rule]=[rej_num,rej_share*100, rej_share_total*100, dr*100, new_credits_num, new_credits_share]
 
     return df
