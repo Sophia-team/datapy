@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import itertools as it
 
 ###################################################
 ## public методы
@@ -20,7 +21,6 @@ def types_and_roles_prediction(file_path, delimiter=';', decimal='.'):
         #TODO подумать, что тут можно делать
         raise
         return None
-    
  
 
 #Возвращает таблицу со статистикой по отказам и прочему
@@ -44,7 +44,30 @@ def analyse_marked_data(data_path, data_markers, delimiter=';', decimal='.'):
                                   
     return data_desctiption, one_factor_analysis, unique_factor_analysis
 
-
+def find_combinations(data_path, data_markers):
+    target, rules, approved, ntu, credited, new_credit = _role_lists(data_markers) 
+    #максимлаьная длина комбинации
+    possible_combinations=list()
+    max_len=int(len(rules))
+    for i in range(max_len):
+        combs=it.combinations(rules, i)
+        for c_j in combs:
+            possible_combinations.append(c_j)
+    
+    combinations_stats=list()
+    
+    # перебираем все комбинации
+    for combination in possible_combinations:
+        comb_columns=list(combination)
+        
+        #нужно сделать подсчёт отказа для данной комбинации, не понял как его считать с экономической точки зрения
+        approve_rate=0
+        default_rate=0   
+        
+        #добавляем полученные рейты к результату с указанием комбинации
+        combinations_stats.append([combination, approve_rate, default_rate])
+    
+    return combinations_stats
 
 ###################################################
 ## private методы
