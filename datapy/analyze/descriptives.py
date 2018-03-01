@@ -69,6 +69,21 @@ def find_combinations(data_path, data_markers):
     
     return combinations_stats
 
+def optimize_rules_dr(rules_combinations, param_max_dr):
+    #только те комбинации, где DR ниже порога
+    fitting_combinations=[rc for rc in rules_combinations if rc[2]<=param_max_dr]
+    #сортируем отобранные комбинации по AR по убыванию
+    fitting_combinations.sort(key=lambda x: x[1], reverse=True)
+    return fitting_combinations
+
+def optimize_rules_ar(rules_combinations, param_min_ar):
+    #только те комбинации, где AR ниже порога
+    fitting_combinations=[rc for rc in rules_combinations if rc[1]>=param_max_dr]
+    #сортируем отобранные комбинации по DR по возрастанию
+    fitting_combinations.sort(key=lambda x: x[2])
+    return fitting_combinations
+    
+
 ###################################################
 ## private методы
 ####################################################
@@ -112,7 +127,7 @@ def _rules_stats(data, target, rules, approved, ntu, credited, new_credit, full_
             df.loc[rule]=[rej_num,rej_share*100, dr*100, new_credits_num, new_credits_share]
         else:
             # reject rate in full dataset
-            rej_share_total=float(rej_num)/full_data_len
+            rej_share_total=rej_num/full_data_len
             df.loc[rule]=[rej_num,rej_share*100, rej_share_total*100, dr*100, new_credits_num, new_credits_share]
 
     return df
