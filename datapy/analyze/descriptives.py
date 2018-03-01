@@ -46,6 +46,7 @@ def analyse_marked_data(data_path, data_markers, delimiter=';', decimal='.'):
 
 def find_combinations(data_path, data_markers):
     target, rules, approved, ntu, credited, new_credit = _role_lists(data_markers) 
+    data = pd.read_csv(data_path, delimiter=';', decimal=',')  
     #максимлаьная длина комбинации
     possible_combinations=list()
     max_len=int(len(rules))
@@ -55,19 +56,27 @@ def find_combinations(data_path, data_markers):
             possible_combinations.append(c_j)
     
     combinations_stats=list()
-    
     # перебираем все комбинации
     for combination in possible_combinations:
         comb_columns=list(combination)
         
-        #нужно сделать подсчёт отказа для данной комбинации, не понял как его считать с экономической точки зрения
-        approve_rate=0
-        default_rate=0   
+        #считаем сколько правил из комбинации сработало
+        data['comb_result']=0
+        for col in comb_columns:
+            data['comb_result']+=data[col]        
+        #DR
+        default_rate=None if target is None else data.loc[data['comb_result']<1, target].mean()
+        
+        
+        #AR
+        data.loc[data['comb_result']>1, 'comb_result']=1
+        approve_rate=None if target is None else 1-data['comb_result'].mean()
         
         #добавляем полученные рейты к результату с указанием комбинации
         combinations_stats.append([combination, approve_rate, default_rate])
     
     return combinations_stats
+
 
 def optimize_rules_dr(rules_combinations, param_max_dr):
     #только те комбинации, где DR ниже порога
