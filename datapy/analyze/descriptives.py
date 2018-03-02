@@ -11,12 +11,21 @@ def types_and_roles_prediction(file_path, delimiter=';', decimal='.'):
     try:
         result=list()
         data=pd.read_csv(file_path, delimiter=delimiter, decimal=decimal)
+        ind = list(data.columns)
+        columns = ['# пропущенных', '% пропущенных']
+        miss = pd.DataFrame(columns=columns)
         for column in data.columns:
             var_description=VariableDescription(column)
             var_description.type=_predict_type(data[column])
             var_description.role=_predict_role(data[column])            
             result.append(var_description)
-        return result
+        
+        cnt = float(data.iloc[:,0].count())
+        for i in ind:
+            cnt_mis = data[i].isnull().sum()
+            pr_mis = data[i].isnull().sum()/ cnt *100
+            miss.loc[i] = [cnt_mis, pr_mis]
+        return result, miss
     except:
         #TODO подумать, что тут можно делать
         raise
@@ -25,7 +34,7 @@ def types_and_roles_prediction(file_path, delimiter=';', decimal='.'):
 
 #Возвращает таблицу со статистикой по отказам и прочему
 def analyse_marked_data(data_path, data_markers, delimiter=';', decimal='.'):
-    target, rules, approved, ntu, credited, new_credit = _role_lists(data_markers) 
+    target, rules, fixed_rule,  approved, ch_rules, ntu, credited, new_credit = _role_lists(data_markers) 
     data = pd.read_csv(data_path, delimiter=delimiter, decimal=decimal)   
     
     #опсиательные по всем данным
@@ -45,13 +54,13 @@ def analyse_marked_data(data_path, data_markers, delimiter=';', decimal='.'):
     return data_desctiption, one_factor_analysis, unique_factor_analysis
 
 def find_combinations(data_path, data_markers):
-    target, rules, approved, ntu, credited, new_credit = _role_lists(data_markers) 
+    target, rules, fixed_rule,  approved, ch_rules, ntu, credited, new_credit = _role_lists(data_markers) 
     data = pd.read_csv(data_path, delimiter=';', decimal=',')  
     #максимлаьная длина комбинации
     possible_combinations=list()
-    max_len=int(len(rules))
+    max_len=int(len(ch_rules))
     for i in range(max_len):
-        combs=it.combinations(rules, i)
+        combs=it.combinations(ch_rules, i)
         for c_j in combs:
             possible_combinations.append(c_j)
     
@@ -136,7 +145,7 @@ def _rules_stats(data, target, rules, approved, ntu, credited, new_credit, full_
             df.loc[rule]=[rej_num,rej_share*100, dr*100, new_credits_num, new_credits_share]
         else:
             # reject rate in full dataset
-            rej_share_total=rej_num/full_data_len
+            rej_share_total=float(rej_num)/full_data_len
             df.loc[rule]=[rej_num,rej_share*100, rej_share_total*100, dr*100, new_credits_num, new_credits_share]
 
     return df
@@ -145,6 +154,8 @@ def _rules_stats(data, target, rules, approved, ntu, credited, new_credit, full_
 def _role_lists(types_and_roles):
     target = None
     rules = list()
+    fixed_rule = list()
+    ch_rules = list()
     approved = None
     ntu = None
     credited = list()
@@ -160,9 +171,13 @@ def _role_lists(types_and_roles):
             credited = types_and_roles[i].name
         elif types_and_roles[i].role == VariableRoleEnum.NEW_CREDIT:
             new_credit = types_and_roles[i].name
-        elif types_and_roles[i].role == VariableRoleEnum.FIXED_RULE or types_and_roles[i].role == VariableRoleEnum.HISTORICAL_RULE:
+        elif types_and_roles[i].role == VariableRoleEnum.FIXED_RULE or types_and_roles[i].role == VariableRoleEnum.HISTORICAL_RULE or types_and_roles[i].role == VariableRoleEnum.POTENCIAL_RULE:
             rules.append(types_and_roles[i].name)
-    return target, rules, approved, ntu, credited, new_credit
+            if types_and_roles[i].role == VariableRoleEnum.FIXED_RULE:
+                fixed_rule.append(types_and_roles[i].name)
+            else:
+                ch_rules.append(types_and_roles[i].name)
+    return target, rules, fixed_rule,  approved, ch_rules, ntu, credited, new_credit
 
 
 #определяет тип переменной
