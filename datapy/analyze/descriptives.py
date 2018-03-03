@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import itertools as it
+import time
 
 ###################################################
 ## public методы
@@ -38,7 +39,7 @@ def analyse_marked_data(data_path, data_markers, delimiter=';', decimal='.'):
     data = pd.read_csv(data_path, delimiter=delimiter, decimal=decimal)   
     
     #опсиательные по всем данным
-    data_desctiption=_data_stats(data, target, approved, ntu, credited)
+    data_desctiption, k_dr =_data_stats(data, target, approved, ntu, credited)
     
     #однофакторные отказы
     one_factor_analysis = _rules_stats(data, target, rules, approved, ntu, credited, new_credit)
@@ -53,7 +54,7 @@ def analyse_marked_data(data_path, data_markers, delimiter=';', decimal='.'):
                                   
     return data_desctiption, one_factor_analysis, unique_factor_analysis
 
-def find_combinations(data_path, data_markers):
+def find_combinations2(data_path, data_markers):
     target, rules, fixed_rule,  approved, ch_rules, ntu, credited, new_credit = _role_lists(data_markers) 
     data = pd.read_csv(data_path, delimiter=';', decimal=',')  
     #максимлаьная длина комбинации
@@ -86,6 +87,41 @@ def find_combinations(data_path, data_markers):
     
     return combinations_stats
 
+#Считаем статистику по всем комбинациям
+def find_combinations(data_path, data_markers):
+    target, rules, fixed_rule,  approved, ch_rules, ntu, credited, new_credit = _role_lists(data_markers) 
+    data = pd.read_csv(data_path, delimiter=';', decimal=',')  
+    data_desctiption, k_dr =_data_stats(data, target, approved, ntu, credited)
+    #максимлаьная длина комбинации
+    possible_combinations=list()
+    max_len=int(len(ch_rules))
+    for i in range(max_len+1):
+        combs=it.combinations(ch_rules, i)
+        for c_j in combs:
+            possible_combinations.append(c_j)
+    # перебираем все комбинации
+    combinations_stats=list()
+    for combination in possible_combinations:
+        comb_columns=list(combination)
+        df = pd.read_csv(data_path, delimiter=';', decimal=',')  
+        df['comb_result']=0
+        for col in comb_columns:
+            df.loc[df[col] == 1, col] = 0
+        df['comb_result'] = df[rules].sum(axis=1)
+        df.loc[(df['comb_result'] < 1) & (df[approved] != 1), approved] = 1
+
+        #DR approved
+        default_rate_ap = df.loc[df[approved] == 1, target].mean()
+        #DR credited
+        default_rate_cr = default_rate_ap * k_dr
+        #AR
+        approve_rate = df[approved].mean()
+
+        #добавляем полученные рейты к результату с указанием комбинации
+        combinations_stats.append([combination, approve_rate, default_rate_ap, default_rate_cr])
+        
+    return combinations_stats
+
 
 def optimize_rules_dr(rules_combinations, param_max_dr):
     #только те комбинации, где DR ниже порога
@@ -111,15 +147,19 @@ def _data_stats(data, target, approved, ntu, credited):
     df = pd.DataFrame(columns=columns)    
     # Approve rate
     ar = None if approved is None else data[approved].mean()
+    cnt_apr = None if approved is None else data[approved].sum()
     # уровень NTU 
-    ntu_rate = None if ntu is None else data[ntu].mean()
+    #ntu_rate = None if ntu is None else data[ntu].mean()
+    ntu_rate = None if ntu is None else data[ntu].sum()/float(cnt_apr)
     # default rate among approved
     approved_dr=None if (approved is None) or (target is None) else data.loc[(data[approved]==1),target].mean()  
     # Дефолтность по выданным
     given_dr=None if (credited is None) or (target is None) else data.loc[(data[credited]==1), target].mean() 
+    # Отношение дефолтности по выданным к дефолтности по одобренным
+    k_dr = given_dr / approved_dr
     
     df.loc['Total']=[ar*100, ntu_rate*100, approved_dr*100, given_dr*100]
-    return df
+    return df, k_dr 
 
 #считает статистики по правилам
 def _rules_stats(data, target, rules, approved, ntu, credited, new_credit, full_data_len=None):
