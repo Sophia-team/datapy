@@ -132,7 +132,7 @@ def optimize_rules_dr(rules_combinations, param_max_dr):
 
 def optimize_rules_ar(rules_combinations, param_min_ar):
     #только те комбинации, где AR ниже порога
-    fitting_combinations=[rc for rc in rules_combinations if rc[1]>=param_max_dr]
+    fitting_combinations=[rc for rc in rules_combinations if rc[1]>=param_min_ar]
     #сортируем отобранные комбинации по DR по возрастанию
     fitting_combinations.sort(key=lambda x: x[2])
     return fitting_combinations
