@@ -121,6 +121,15 @@ class analyser():
         return result_df
 
     
+    def find_users_combination(self, users_combination):
+        if self._combinations is None:
+            combinations=self.find_combinations()
+        else:
+            combinations=self._combinations.copy()
+        
+        search_result=combinations.loc[[self._slice_in_array(users_combination, a)  for a in combs.index.values]]
+        
+        return search_result
 
     def optimize_rules_dr(self, param_max_dr, dr_column='DR', ar_column='AR'):
         if self._combinations is None:
@@ -145,6 +154,12 @@ class analyser():
     ###################################################
     ## private методы
     ####################################################
+                         
+    def _slice_in_array(self, sl, arr):
+        for s in sl:
+            if not s in arr:
+                return False
+        return True
 
     def _data_stats(self, data, target, approved, ntu, credited):
         columns=['уровень одобрения (%)', 'уровень NTU (%)', 'дефолтность по одобренным (%)', 'дефолтность по выданным (%)']
