@@ -114,10 +114,10 @@ class analyser():
             approve_rate = df[approved].mean()
 
             #добавляем полученные рейты к результату с указанием комбинации
-            combinations_stats.append([combination, approve_rate, default_rate_ap, default_rate_cr,data_desctiption.loc['Total','дефолтность по выданным (%)']/100])
+            combinations_stats.append([combination, approve_rate * 100, (approve_rate / (data_desctiption.loc['Total','уровень одобрения (%)']/100) - 1) * 100, default_rate_ap * 100, (default_rate_ap / (data_desctiption.loc['Total','дефолтность по одобренным (%)']/100) - 1) * 100, default_rate_cr * 100, (default_rate_cr / (data_desctiption.loc['Total','дефолтность по выданным (%)']/100) - 1) * 100])
 
 
-        result_df=pd.DataFrame(data=[cs[1:] for cs in combinations_stats], index=[cs[0] for cs in combinations_stats], columns=['AR','DR among aproved','DR','Базовый DR'])
+        result_df=pd.DataFrame(data=[cs[1:] for cs in combinations_stats], index=[cs[0] for cs in combinations_stats], columns=['AR', 'AR_shifted', 'DR_aproved', 'DR_aproved_shifted', 'DR','DR_shifted'])
         self._combinations=result_df.copy()
         return result_df
 
