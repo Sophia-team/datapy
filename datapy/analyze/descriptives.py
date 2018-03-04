@@ -91,51 +91,58 @@ def find_combinations2(data_path, data_markers):
 def find_combinations(data_path, data_markers):
     target, rules, fixed_rule,  approved, ch_rules, ntu, credited, new_credit = _role_lists(data_markers) 
     data = pd.read_csv(data_path, delimiter=';', decimal=',')  
+    #Описание данных ('уровень одобрения (%)', 'уровень NTU (%)', 'дефолтность по одобренным (%)', 'дефолтность по выданным (%)')
+    # и Отношение дефолтности по выданным к дефолтности по одобренным
     data_desctiption, k_dr =_data_stats(data, target, approved, ntu, credited)
-    #максимлаьная длина комбинации
+    
+    # Список возможных комбинаций
     possible_combinations=list()
-    max_len=int(len(ch_rules))
-    for i in range(max_len+1):
+    max_combination_len=int(len(ch_rules))
+    for i in range(max_combination_len+1):
         combs=it.combinations(ch_rules, i)
         for c_j in combs:
             possible_combinations.append(c_j)
-    # перебираем все комбинации
+    
+    # Перебираем все комбинации
     combinations_stats=list()
     for combination in possible_combinations:
         comb_columns=list(combination)
-        df = pd.read_csv(data_path, delimiter=';', decimal=',')  
-        df['comb_result']=0
+        data['comb_result']=0
+        #считаем, сколько из правил в комбинации сработало на наблюдении
         for col in comb_columns:
-            df.loc[df[col] == 1, col] = 0
-        df['comb_result'] = df[rules].sum(axis=1)
-        df.loc[(df['comb_result'] < 1) & (df[approved] != 1), approved] = 1
+            data['comb_result']+=data[col]
+        # Помечаем условно аппрувнутыми тех, по кому ни одно правило из комбинации не сработало
+        data['approved_in_combination']=0
+        data.loc[(data['comb_result'] < 1),'approved_in_combination']=1
 
-        #DR approved
-        default_rate_ap = df.loc[df[approved] == 1, target].mean()
-        #DR credited
+        
+
+        #DR among approved in combination 
+        default_rate_ap = data.loc[data['approved_in_combination'] == 1, target].mean()
+        #DR credited 
         default_rate_cr = default_rate_ap * k_dr
-        #AR
-        approve_rate = df[approved].mean()
+        #AR in combination
+        approve_rate = data['approved_in_combination'].mean()
 
         #добавляем полученные рейты к результату с указанием комбинации
         combinations_stats.append([combination, approve_rate, default_rate_ap, default_rate_cr])
         
-    return combinations_stats
+    result_df=pd.DataFrame(data=[cs[1:] for cs in combinations_stats], index=[cs[0] for cs in combinations_stats], columns=['AR','DR among aproved','DR'])
+    return result_df
 
 
-def optimize_rules_dr(rules_combinations, param_max_dr):
+def optimize_rules_dr(rules_combinations, param_max_dr, dr_column='DR', ar_column='AR'):
     #только те комбинации, где DR ниже порога
-    fitting_combinations=[rc for rc in rules_combinations if rc[2]<=param_max_dr]
+    fitting_combinations=rules_combinations.loc[rules_combinations[dr_column]<=param_max_dr]
     #сортируем отобранные комбинации по AR по убыванию
-    fitting_combinations.sort(key=lambda x: x[1], reverse=True)
-    return fitting_combinations
+    return fitting_combinations.sort_values(by=ar_column,ascending=False)
 
-def optimize_rules_ar(rules_combinations, param_min_ar):
+
+def optimize_rules_ar(rules_combinations, param_min_ar, dr_column='DR', ar_column='AR'):
     #только те комбинации, где AR ниже порога
-    fitting_combinations=[rc for rc in rules_combinations if rc[1]>=param_min_ar]
+    fitting_combinations=rules_combinations.loc[rules_combinations[ar_column]>=param_min_ar]
     #сортируем отобранные комбинации по DR по возрастанию
-    fitting_combinations.sort(key=lambda x: x[2])
-    return fitting_combinations
+    return fitting_combinations.sort_values(by=dr_column,ascending=True)
     
 
 ###################################################
@@ -149,7 +156,6 @@ def _data_stats(data, target, approved, ntu, credited):
     ar = None if approved is None else data[approved].mean()
     cnt_apr = None if approved is None else data[approved].sum()
     # уровень NTU 
-    #ntu_rate = None if ntu is None else data[ntu].mean()
     ntu_rate = None if ntu is None else data[ntu].sum()/float(cnt_apr)
     # default rate among approved
     approved_dr=None if (approved is None) or (target is None) else data.loc[(data[approved]==1),target].mean()  
