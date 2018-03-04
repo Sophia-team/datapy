@@ -32,8 +32,8 @@ class analyser():
             miss = pd.DataFrame(columns=columns)
             for column in data.columns:
                 var_description=VariableDescription(column)
-                var_description.type=_predict_type(data[column])
-                var_description.role=_predict_role(data[column])            
+                var_description.type=self._predict_type(data[column])
+                var_description.role=self._predict_role(data[column])            
                 result.append(var_description)
 
             cnt = float(data.iloc[:,0].count())
@@ -51,15 +51,15 @@ class analyser():
     #Возвращает таблицу со статистикой по отказам и прочему
     def analyse_marked_data(self, data_path, data_markers, delimiter=';', decimal='.'):
         self._input_data_markers=data_markers
-        target, rules, fixed_rule,  approved, ch_rules, ntu, credited, new_credit = _role_lists(data_markers) 
+        target, rules, fixed_rule,  approved, ch_rules, ntu, credited, new_credit = self._role_lists(data_markers) 
         data = pd.read_csv(data_path, delimiter=delimiter, decimal=decimal)   
         self._input_data=data.copy()
         
         #опсиательные по всем данным
-        data_desctiption, k_dr =_data_stats(data, target, approved, ntu, credited)
+        data_desctiption, k_dr =self._data_stats(data, target, approved, ntu, credited)
 
         #однофакторные отказы
-        one_factor_analysis = _rules_stats(data, target, rules, approved, ntu, credited, new_credit)
+        one_factor_analysis = self._rules_stats(data, target, rules, approved, ntu, credited, new_credit)
 
         #уникальные отказы
         unique_factor_data=data.copy()
@@ -67,12 +67,15 @@ class analyser():
         for rule in rules:
             unique_factor_data['active_rules']+=unique_factor_data[rule]
         unique_factor_data = unique_factor_data.loc[unique_factor_data['active_rules']==1]
-        unique_factor_analysis = _rules_stats(unique_factor_data, target, rules, approved, ntu, credited, new_credit, data.shape[0])
+        unique_factor_analysis = self._rules_stats(unique_factor_data, target, rules, approved, ntu, credited, new_credit, data.shape[0])
 
         return data_desctiption, one_factor_analysis, unique_factor_analysis
 
     #Считаем статистику по всем комбинациям
     def find_combinations(self):
+        '''
+        Считаем статистику по всем комбинациям
+        '''
         if self._input_data is None or self._input_data_markers is None:
             raise Exception('Необходимо предварительно провести анализ')
         
@@ -80,10 +83,10 @@ class analyser():
             return self._combinations
         
 
-        target, rules, fixed_rule,  approved, ch_rules, ntu, credited, new_credit = _role_lists(self._input_data_markers) 
+        target, rules, fixed_rule,  approved, ch_rules, ntu, credited, new_credit = self._role_lists(self._input_data_markers) 
         data=self._input_data.copy()
         
-        data_desctiption, k_dr =_data_stats(data, target, approved, ntu, credited)
+        data_desctiption, k_dr =self._data_stats(data, target, approved, ntu, credited)
         #максимлаьная длина комбинации
         possible_combinations=list()
         max_len=int(len(ch_rules))
@@ -117,7 +120,7 @@ class analyser():
         self._combinations=result_df.copy()
         return result_df
 
-
+    
 
     def optimize_rules_dr(self, param_max_dr, dr_column='DR', ar_column='AR'):
         if self._combinations is None:
@@ -143,7 +146,7 @@ class analyser():
     ## private методы
     ####################################################
 
-    def _data_stats(data, target, approved, ntu, credited):
+    def _data_stats(self, data, target, approved, ntu, credited):
         columns=['уровень одобрения (%)', 'уровень NTU (%)', 'дефолтность по одобренным (%)', 'дефолтность по выданным (%)']
         df = pd.DataFrame(columns=columns)    
         # Approve rate
@@ -162,7 +165,7 @@ class analyser():
         return df, k_dr 
 
     #считает статистики по правилам
-    def _rules_stats(data, target, rules, approved, ntu, credited, new_credit, full_data_len=None):
+    def _rules_stats(self, data, target, rules, approved, ntu, credited, new_credit, full_data_len=None):
         if full_data_len is None or full_data_len < 1:
             columns = ['# отказов', '% отказов', 'дефолтность (%)', '# новых кредитов', '% новых кредитов']
         else:
@@ -191,7 +194,7 @@ class analyser():
         return df
 
     # возвращает списки имен по ролям
-    def _role_lists(types_and_roles):
+    def _role_lists(self, types_and_roles):
         target = None
         rules = list()
         fixed_rule = list()
@@ -221,7 +224,7 @@ class analyser():
 
 
     #определяет тип переменной
-    def _predict_type(data_series):
+    def _predict_type(self, data_series):
         column_name=data_series.name
         column_type=data_series.dtype
         column_total_len=len(data_series)
@@ -243,7 +246,7 @@ class analyser():
             return VariableTypeEnum.Nominal
 
     #определяет роль переменной
-    def _predict_role(data_series):
+    def _predict_role(self, data_series):
         column_name=data_series.name
         if 'r_'==column_name[:2]:
             return VariableRoleEnum.HISTORICAL_RULE
