@@ -9,13 +9,14 @@ class analyser():
         self._input_data=None
         self._input_data_markers=None
         self._combinations=None
-        
+
         
         
     def reset():
         self._input_data=None
         self._input_data_markers=None
         self._combinations=None
+
 
 
     ###################################################
@@ -113,10 +114,10 @@ class analyser():
             approve_rate = df[approved].mean()
 
             #добавляем полученные рейты к результату с указанием комбинации
-            combinations_stats.append([combination, approve_rate, default_rate_ap, default_rate_cr])
+            combinations_stats.append([combination, approve_rate, default_rate_ap, default_rate_cr,data_desctiption.loc['Total','дефолтность по выданным (%)']/100])
 
 
-        result_df=pd.DataFrame(data=[cs[1:] for cs in combinations_stats], index=[cs[0] for cs in combinations_stats], columns=['AR','DR among aproved','DR'])
+        result_df=pd.DataFrame(data=[cs[1:] for cs in combinations_stats], index=[cs[0] for cs in combinations_stats], columns=['AR','DR among aproved','DR','Базовый DR'])
         self._combinations=result_df.copy()
         return result_df
 
@@ -127,7 +128,7 @@ class analyser():
         else:
             combinations=self._combinations.copy()
         
-        search_result=combinations.loc[[self._slice_in_array(users_combination, a)  for a in combs.index.values]]
+        search_result=combinations.loc[[self._slice_in_array(users_combination, a)  for a in combinations.index.values]]
         
         return search_result
 
