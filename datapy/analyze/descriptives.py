@@ -89,7 +89,7 @@ def find_combinations2(data_path, data_markers):
 
 #Считаем статистику по всем комбинациям
 def find_combinations(data_path, data_markers):
-    target, rules, fixed_rule,  approved, ch_rules, ntu, credited, new_credit = _role_lists(data_markers) 
+    target, rules, fixed_rules,  approved, ch_rules, ntu, credited, new_credit = _role_lists(data_markers) 
     data = pd.read_csv(data_path, delimiter=';', decimal=',')  
     #Описание данных ('уровень одобрения (%)', 'уровень NTU (%)', 'дефолтность по одобренным (%)', 'дефолтность по выданным (%)')
     # и Отношение дефолтности по выданным к дефолтности по одобренным
@@ -101,7 +101,7 @@ def find_combinations(data_path, data_markers):
     for i in range(max_combination_len+1):
         combs=it.combinations(ch_rules, i)
         for c_j in combs:
-            possible_combinations.append(c_j)
+            possible_combinations.append(set(fixed_rules+list(c_j)))
     
     # Перебираем все комбинации
     combinations_stats=list()
