@@ -54,41 +54,45 @@ def analyse_marked_data(data_path, data_markers, delimiter=';', decimal='.'):
                                   
     return data_desctiption, one_factor_analysis, unique_factor_analysis
 
-def find_combinations2(data_path, data_markers):
+#Считаем статистику по всем комбинациям
+def find_combinations(data_path, data_markers):
     target, rules, fixed_rule,  approved, ch_rules, ntu, credited, new_credit = _role_lists(data_markers) 
     data = pd.read_csv(data_path, delimiter=';', decimal=',')  
+    data_desctiption, k_dr =_data_stats(data, target, approved, ntu, credited)
     #максимлаьная длина комбинации
     possible_combinations=list()
     max_len=int(len(ch_rules))
-    for i in range(max_len):
+    for i in range(max_len+1):
         combs=it.combinations(ch_rules, i)
         for c_j in combs:
             possible_combinations.append(c_j)
-    
-    combinations_stats=list()
     # перебираем все комбинации
+    combinations_stats=list()
     for combination in possible_combinations:
         comb_columns=list(combination)
-        
-        #считаем сколько правил из комбинации сработало
-        data['comb_result']=0
+        df = data.copy()
+        df['comb_result']=0
         for col in comb_columns:
-            data['comb_result']+=data[col]        
-        #DR
-        default_rate=None if target is None else data.loc[data['comb_result']<1, target].mean()
-        
-        
-        #AR
-        data.loc[data['comb_result']>1, 'comb_result']=1
-        approve_rate=None if target is None else 1-data['comb_result'].mean()
-        
-        #добавляем полученные рейты к результату с указанием комбинации
-        combinations_stats.append([combination, approve_rate, default_rate])
-    
-    return combinations_stats
+            df.loc[df[col] == 1, col] = 0
+        df['comb_result'] = df[rules].sum(axis=1)
+        df.loc[(df['comb_result'] < 1) & (df[approved] != 1), approved] = 1
 
-#Считаем статистику по всем комбинациям
-def find_combinations(data_path, data_markers):
+        #DR approved
+        default_rate_ap = df.loc[df[approved] == 1, target].mean()
+        #DR credited
+        default_rate_cr = default_rate_ap * k_dr
+        #AR
+        approve_rate = df[approved].mean()
+
+        #добавляем полученные рейты к результату с указанием комбинации
+        combinations_stats.append([combination, approve_rate, default_rate_ap, default_rate_cr])
+     
+        
+    result_df=pd.DataFrame(data=[cs[1:] for cs in combinations_stats], index=[cs[0] for cs in combinations_stats], columns=['AR','DR among aproved','DR'])
+    return result_df
+
+#Считаем статистику по всем комбинациям это вариант с возратом включенных
+def find_combinations2(data_path, data_markers):
     target, rules, fixed_rules,  approved, ch_rules, ntu, credited, new_credit = _role_lists(data_markers) 
     data = pd.read_csv(data_path, delimiter=';', decimal=',')  
     #Описание данных ('уровень одобрения (%)', 'уровень NTU (%)', 'дефолтность по одобренным (%)', 'дефолтность по выданным (%)')
@@ -124,7 +128,7 @@ def find_combinations(data_path, data_markers):
         #AR in combination
         approve_rate = data['approved_in_combination'].mean()
 
-        #добавляем полученные рейты к результату с указанием комбинации
+        #добавляем полученные рейты к результату с указанием комбинации 
         combinations_stats.append([combination, approve_rate, default_rate_ap, default_rate_cr])
         
     result_df=pd.DataFrame(data=[cs[1:] for cs in combinations_stats], index=[cs[0] for cs in combinations_stats], columns=['AR','DR among aproved','DR'])
