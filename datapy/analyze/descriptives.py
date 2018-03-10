@@ -52,8 +52,20 @@ class analyser():
     #Возвращает таблицу со статистикой по отказам и прочему
     def analyse_marked_data(self, data_path, data_markers, delimiter=';', decimal='.'):
         self._input_data_markers=data_markers
-        target, rules, fixed_rule,  approved, ch_rules, ntu, credited, new_credit = self._role_lists(data_markers) 
-        data = pd.read_csv(data_path, delimiter=delimiter, decimal=decimal)   
+        target, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit = self._role_lists(data_markers) 
+        data = pd.read_csv(data_path, delimiter=delimiter, decimal=decimal)
+        # корректный расчет approved
+        if p_rule:
+            data['app_res'] = 0
+            data['app_res'] = data[ach_rules].sum(axis=1)
+            data[approved] = 0
+            data.loc[data['app_res'] < 1, approved] = 1
+        else:
+            data['app_res'] = 0
+            data['app_res'] = data[rules].sum(axis=1)
+            data[approved] = 0
+            data.loc[data['app_res'] < 1, approved] = 1            
+            
         self._input_data=data.copy()
         
         #опсиательные по всем данным
@@ -84,7 +96,7 @@ class analyser():
             return self._combinations
         
 
-        target, rules, fixed_rule,  approved, ch_rules, ntu, credited, new_credit = self._role_lists(self._input_data_markers) 
+        target, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit = self._role_lists(self._input_data_markers) 
         data=self._input_data.copy()
         
         data_desctiption, k_dr =self._data_stats(data, target, approved, ntu, credited)
@@ -101,10 +113,19 @@ class analyser():
             comb_columns=list(combination)
             df = data.copy()
             df['comb_result']=0
+            data[approved] = 0
+            # create list for potential
+            potential = list()
+            
             for col in comb_columns:
-                df.loc[df[col] == 1, col] = 0
-            df['comb_result'] = df[rules].sum(axis=1)
-            df.loc[(df['comb_result'] < 1) & (df[approved] != 1), approved] = 1
+                # checking potential
+                if not col in p_rule:
+                    df.loc[df[col] == 1, col] = 0
+                else:
+                    potential.append(col)
+
+            df['comb_result'] = df[ach_rules + potential].sum(axis=1)    
+            df.loc[df['comb_result'] < 1, approved] = 1
 
             #DR approved
             default_rate_ap = df.loc[df[approved] == 1, target].mean()
@@ -215,6 +236,9 @@ class analyser():
         rules = list()
         fixed_rule = list()
         ch_rules = list()
+        ach_rules = list()
+        h_rule = list()
+        p_rule = list()
         approved = None
         ntu = None
         credited = list()
@@ -234,9 +258,15 @@ class analyser():
                 rules.append(types_and_roles[i].name)
                 if types_and_roles[i].role == VariableRoleEnum.FIXED_RULE:
                     fixed_rule.append(types_and_roles[i].name)
+                    ach_rules.append(types_and_roles[i].name)
                 else:
                     ch_rules.append(types_and_roles[i].name)
-        return target, rules, fixed_rule,  approved, ch_rules, ntu, credited, new_credit
+                    if types_and_roles[i].role == VariableRoleEnum.HISTORICAL_RULE:
+                        h_rule.append(types_and_roles[i].name)
+                        ach_rules.append(types_and_roles[i].name)
+                    else:
+                        p_rule.append(types_and_roles[i].name)         
+        return target, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit
 
 
     #определяет тип переменной
