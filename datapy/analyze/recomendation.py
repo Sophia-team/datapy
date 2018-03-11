@@ -17,16 +17,37 @@ class recommender():
             gaps=self._GetRule(one_factor_data[column], one_factor_data[default_flag])
             one_factor_threshold=self._GetThreshold(gaps)
             trend, new_dr =self._GetTrend(one_factor_data[column], one_factor_data[default_flag], one_factor_threshold)
-            
-            old_dr=data[default_flag].mean()
-            
+            old_dr=data[default_flag].mean()            
             dr_delta=0 if new_dr is None else old_dr-new_dr
-            
             result.append([column, one_factor_threshold,trend, dr_delta])
         return result
+    
+    def RecommendMultiRules(self, data, characteristic_columns, default_flag):
+        result=list()
+        multi_factor_data=data[characteristic_columns+[default_flag]].dropna()
+        a=self._GetMultiRule(multi_factor_data, default_flag)
+        
+        return a
+    
+    
+    def _GetMultiRule(self, data, target, depth=2):
+        dt=tree.DecisionTreeClassifier(max_depth=depth, min_samples_leaf=int(0.2*len(data[target])))
+        dt.fit(data.drop([target], axis=1), data[target])
+        
+        nodes=dt.apply(data.drop([default_column],axis=1))
+        data['node']=nodes
+        node_dr=data.groupby(by='node')[target].mean()
+        max_dr_node=node_dr.argmax()
+        
+        return max_dr_node
+        pass
+    
+    
+    
+    
 
-    def _GetRule(self, x, y):
-        dt=tree.DecisionTreeClassifier(max_depth=1, min_samples_leaf=int(0.2*len(x)))
+    def _GetRule(self, x, y, depth=1):
+        dt=tree.DecisionTreeClassifier(max_depth=depth, min_samples_leaf=int(0.2*len(x)))
         dt.fit(x[:,None],y[:,None])
         gaps=self._GetGaps(dt)
         return gaps
