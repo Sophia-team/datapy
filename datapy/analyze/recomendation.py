@@ -16,8 +16,13 @@ class recommender():
             one_factor_data=data[[column, default_flag]].dropna()
             gaps=self._GetRule(one_factor_data[column], one_factor_data[default_flag])
             one_factor_threshold=self._GetThreshold(gaps)
-            trend=self._GetTrend(one_factor_data[column], one_factor_data[default_flag], one_factor_threshold)
-            result.append([column, one_factor_threshold,trend])
+            trend, new_dr =self._GetTrend(one_factor_data[column], one_factor_data[default_flag], one_factor_threshold)
+            
+            old_dr=data[default_flag].mean()
+            
+            dr_delta=0 if new_dr is None else old_dr-new_dr
+            
+            result.append([column, one_factor_threshold,trend, dr_delta])
         return result
 
     def _GetRule(self, x, y):
@@ -34,10 +39,10 @@ class recommender():
 
     def _GetTrend(self, x, y, threshold):
         if threshold is None:
-            return None
+            return None, None
         left_rate=np.mean([y_v for x_v, y_v  in zip(x,y) if x_v<=threshold])
         right_rate=np.mean([y_v for x_v, y_v  in zip(x,y) if x_v>threshold])  
-        return right_rate>=left_rate
+        return right_rate>=left_rate, min(left_rate, right_rate)
 
 
     def _GetGaps(self, estimator):
