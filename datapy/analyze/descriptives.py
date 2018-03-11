@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import itertools as it
-import time
+import datetime
 
 class analyser():
     
@@ -68,6 +68,9 @@ class analyser():
             
         self._input_data=data.copy()
         
+        #расчет времени
+        time = self._count_time(data, ch_rules)
+        
         #опсиательные по всем данным
         data_desctiption, k_dr =self._data_stats(data, target, approved, ntu, credited)
 
@@ -82,7 +85,7 @@ class analyser():
         unique_factor_data = unique_factor_data.loc[unique_factor_data['active_rules']==1]
         unique_factor_analysis = self._rules_stats(unique_factor_data, target, rules, approved, ntu, credited, new_credit, data.shape[0])
 
-        return data_desctiption, one_factor_analysis, unique_factor_analysis
+        return data_desctiption, one_factor_analysis, unique_factor_analysis, time
 
     #Считаем статистику по всем комбинациям
     def find_combinations(self):
@@ -135,7 +138,7 @@ class analyser():
             approve_rate = df[approved].mean()
 
             #добавляем полученные рейты к результату с указанием комбинации
-            combinations_stats.append([combination, approve_rate * 100, (approve_rate / (data_desctiption.loc['Total','уровень одобрения (%)']/100) - 1) * 100, default_rate_ap * 100, (default_rate_ap / (data_desctiption.loc['Total','дефолтность по одобренным (%)']/100) - 1) * 100, default_rate_cr * 100, (default_rate_cr / (data_desctiption.loc['Total','дефолтность по выданным (%)']/100) - 1) * 100])
+            combinations_stats.append([combination, approve_rate * 100, (approve_rate - (data_desctiption.loc['Total','уровень одобрения (%)']/100)) * 100, default_rate_ap * 100, (default_rate_ap - (data_desctiption.loc['Total','дефолтность по одобренным (%)']/100)) * 100, default_rate_cr * 100, (default_rate_cr - (data_desctiption.loc['Total','дефолтность по выданным (%)']/100)) * 100])
 
 
         result_df=pd.DataFrame(data=[cs[1:] for cs in combinations_stats], index=[cs[0] for cs in combinations_stats], columns=['AR', 'AR_shifted', 'DR_aproved', 'DR_aproved_shifted', 'DR','DR_shifted'])
@@ -176,6 +179,17 @@ class analyser():
     ###################################################
     ## private методы
     ####################################################
+    
+    # расчет времени
+    def _count_time(self, data, rules):
+        columns = ['количество комбинаций', 'приблизительное время расчета']
+        df = pd.DataFrame(columns=columns)
+        avg_time = 7.804629259918927e-07
+        cnt_com = int(2 ** len(rules))
+        cnt_row = data.iloc[:,[0]].count()
+        df.loc['Total'] = [cnt_com, "{:0>8}".format(datetime.timedelta(seconds = float(cnt_com * cnt_row * avg_time)))]
+        return df
+    
                          
     def _slice_in_array(self, sl, arr):
         for s in sl:
