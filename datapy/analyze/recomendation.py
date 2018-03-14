@@ -3,6 +3,7 @@ import pandas as pd
 import math as math
 from sklearn import tree
 from sklearn.linear_model import LinearRegression
+from sklearn.tree import _tree
 
 class recommender():
     
@@ -25,9 +26,41 @@ class recommender():
     def RecommendMultiRules(self, data, characteristic_columns, default_flag):
         result=list()
         multi_factor_data=data[characteristic_columns+[default_flag]].dropna()
-        a=self._GetMultiRule(multi_factor_data, default_flag)
-        
-        return a
+        dt, best_node, best_node_dr = self._GetMultiRule(multi_factor_data, default_flag)  
+        rules=self._extractRules(dt,characteristic_columns)
+        best_rule=self._findRule(rules,best_node)
+        old_dr=data[default_flag].mean()
+        new_dr=best_node_dr
+        dr_delta=0 if new_dr is None else old_dr-new_dr
+        return best_rule, dr_delta
+    
+    #извллекает правила из дерева решений
+    def _extractRules(self, tree, feature_names):
+        tree_ = tree.tree_
+        feature_name = [feature_names[i] if i != _tree.TREE_UNDEFINED else "undefined!" for i in tree_.feature ]
+    
+        rules=list()
+
+        def recurse(node, depth, prev_steps):
+            indent = "  " * depth
+            if tree_.feature[node] != _tree.TREE_UNDEFINED:
+                name = feature_name[node]
+                threshold = tree_.threshold[node]
+                recurse(tree_.children_left[node], depth + 1, prev_steps+[[name,'<=', threshold]])
+                recurse(tree_.children_right[node], depth + 1, prev_steps+[[name,'>', threshold]])
+            else:
+                rules.append(prev_steps+[node])
+                return
+
+        recurse(0, 1, list())
+        return rules
+    
+    
+    #находит правило для заданного узла
+    def _findRule(self, rules, find_node):
+        for rule in rules:
+            if rule[-1:][0]==find_node:
+                return rule
     
     
     def _GetMultiRule(self, data, target, depth=2):
@@ -38,8 +71,8 @@ class recommender():
         data['node']=nodes
         node_dr=data.groupby(by='node')[target].mean()
         max_dr_node=node_dr.argmax()
-        
-        return max_dr_node
+               
+        return dt, max_dr_node, node_dr[max_dr_node]
         pass
     
     
