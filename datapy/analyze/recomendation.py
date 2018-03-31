@@ -80,10 +80,14 @@ class recommender():
     
 
     def _GetRule(self, x, y, depth=1):
-        dt=tree.DecisionTreeClassifier(max_depth=depth, min_samples_leaf=int(0.2*len(x)))
-        dt.fit(x[:,None],y[:,None])
-        gaps=self._GetGaps(dt)
-        return gaps
+        try:
+            dt=tree.DecisionTreeClassifier(max_depth=depth, min_samples_leaf=int(0.2*len(x)))
+            dt.fit(x[:,None],y[:,None])
+            gaps=self._GetGaps(dt)  
+            return gaps
+        except:
+            return [[-100000000000000,100000000000000]]
+
 
 
     def _GetThreshold(self, gaps):

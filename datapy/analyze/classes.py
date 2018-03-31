@@ -19,6 +19,7 @@ class VariableRoleEnum(Enum):
     CREDITED = 8
     APPROVED = 9
     NEW_CREDIT = 10
+    VALUE_COLUMN=51
     TARGET = 99
     
     

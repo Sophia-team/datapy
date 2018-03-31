@@ -24,10 +24,9 @@ class analyser():
     ####################################################
 
     #Предполагает роли и типы данных в файле
-    def types_and_roles_prediction(self, file_path, delimiter=';', decimal='.', encoding='utf-8'):
+    def types_and_roles_prediction(self, data, delimiter=';', decimal='.', encoding='utf-8'):
         try:
             result=list()
-            data=pd.read_csv(file_path, delimiter=delimiter, decimal=decimal,encoding=encoding)
             ind = list(data.columns)
             columns = ['# пропущенных', '% пропущенных']
             miss = pd.DataFrame(columns=columns)
@@ -50,10 +49,9 @@ class analyser():
 
 
     #Возвращает таблицу со статистикой по отказам и прочему
-    def analyse_marked_data(self, data_path, data_markers, delimiter=';', decimal='.',encoding='utf-8'):
+    def analyse_marked_data(self, data, data_markers):
         self._input_data_markers=data_markers
         target, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit = self._role_lists(data_markers) 
-        data = pd.read_csv(data_path, delimiter=delimiter, decimal=decimal,encoding=encoding)
         # корректный расчет approved
         if p_rule:
             data['app_res'] = 0
