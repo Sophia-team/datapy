@@ -26,13 +26,16 @@ class recommender():
     def RecommendMultiRules(self, data, characteristic_columns, default_flag):
         result=list()
         multi_factor_data=data[characteristic_columns+[default_flag]].dropna()
-        dt, best_node, best_node_dr = self._GetMultiRule(multi_factor_data, default_flag)  
-        rules=self._extractRules(dt,characteristic_columns)
-        best_rule=self._findRule(rules,best_node)
-        old_dr=data[default_flag].mean()
-        new_dr=best_node_dr
-        dr_delta=0 if new_dr is None else old_dr-new_dr
-        return best_rule, dr_delta
+        try:
+            dt, best_node, best_node_dr = self._GetMultiRule(multi_factor_data, default_flag)  
+            rules=self._extractRules(dt,characteristic_columns)
+            best_rule=self._findRule(rules,best_node)
+            old_dr=data[default_flag].mean()
+            new_dr=best_node_dr
+            dr_delta=0 if new_dr is None else old_dr-new_dr
+            return best_rule, dr_delta
+        except:
+            return None, None
     
     #извллекает правила из дерева решений
     def _extractRules(self, tree, feature_names):
@@ -67,7 +70,7 @@ class recommender():
         dt=tree.DecisionTreeClassifier(max_depth=depth, min_samples_leaf=int(0.2*len(data[target])))
         dt.fit(data.drop([target], axis=1), data[target])
         
-        nodes=dt.apply(data.drop([default_column],axis=1))
+        nodes=dt.apply(data.drop([target],axis=1))
         data['node']=nodes
         node_dr=data.groupby(by='node')[target].mean()
         max_dr_node=node_dr.argmax()

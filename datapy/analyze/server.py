@@ -59,4 +59,20 @@ class server():
         return self._recomender.RecommendRules(self._data, characteristic_columns, target_field)
     
     
+    def RecomendMultyFactorRules(self, characteristic_columns=[]):
+        if self._types_and_roles is None:
+            raise Exception('Предварительно необходимо проанализировать столбцы и присвоить им роли методом AnalyseMarkedData')
+        
+        potential_targets=[tr for tr in self._types_and_roles if tr.role==VariableRoleEnum.TARGET]
+        
+        if not len(potential_targets)==1:
+            raise Exception('Целевой столбец не задан')
+        target_field=potential_targets[0].name
+        #если пользователь не передал значений, анализируем всё
+        if len(characteristic_columns)==0:            
+            characteristic_columns=[tr.name for tr in self._types_and_roles if tr.role==VariableRoleEnum.VALUE_COLUMN]
+          
+        return self._recomender.RecommendMultiRules(self._data, characteristic_columns, target_field)
+    
+    
     
