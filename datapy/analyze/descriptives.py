@@ -24,10 +24,10 @@ class analyser():
     ####################################################
 
     #Предполагает роли и типы данных в файле
-    def types_and_roles_prediction(self, file_path, delimiter=';', decimal='.'):
+    def types_and_roles_prediction(self, file_path, delimiter=';', decimal='.', encoding='utf-8'):
         try:
             result=list()
-            data=pd.read_csv(file_path, delimiter=delimiter, decimal=decimal)
+            data=pd.read_csv(file_path, delimiter=delimiter, decimal=decimal,encoding=encoding)
             ind = list(data.columns)
             columns = ['# пропущенных', '% пропущенных']
             miss = pd.DataFrame(columns=columns)
@@ -50,10 +50,10 @@ class analyser():
 
 
     #Возвращает таблицу со статистикой по отказам и прочему
-    def analyse_marked_data(self, data_path, data_markers, delimiter=';', decimal='.'):
+    def analyse_marked_data(self, data_path, data_markers, delimiter=';', decimal='.',encoding='utf-8'):
         self._input_data_markers=data_markers
         target, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit = self._role_lists(data_markers) 
-        data = pd.read_csv(data_path, delimiter=delimiter, decimal=decimal)
+        data = pd.read_csv(data_path, delimiter=delimiter, decimal=decimal,encoding=encoding)
         # корректный расчет approved
         if p_rule:
             data['app_res'] = 0
@@ -187,7 +187,7 @@ class analyser():
         avg_time = 7.804629259918927e-07
         cnt_com = int(2 ** len(rules))
         cnt_row = data.iloc[:,[0]].count()
-        df.loc['Total'] = [cnt_com, "{:0>8}".format(datetime.timedelta(seconds = float(cnt_com * cnt_row * avg_time)))]
+        df.loc['Total'] = [cnt_com, "{:0>8}".format(str(datetime.timedelta(seconds = float(cnt_com * cnt_row * avg_time))))]
         return df
     
                          
