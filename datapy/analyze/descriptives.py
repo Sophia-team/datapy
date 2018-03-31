@@ -236,11 +236,11 @@ class analyser():
 
 
             if full_data_len is None or full_data_len<1:
-                df.loc[rule]=[rej_num,rej_share*100, dr*100, new_credits_num, new_credits_share]
+                df.loc[rule]=[rej_num,rej_share*100, dr*100, new_credits_num, new_credits_share * 100]
             else:
                 # reject rate in full dataset
                 rej_share_total=float(rej_num)/full_data_len
-                df.loc[rule]=[rej_num,rej_share*100, rej_share_total*100, dr*100, new_credits_num, new_credits_share]
+                df.loc[rule]=[rej_num,rej_share*100, rej_share_total*100, dr*100, new_credits_num, new_credits_share * 100]
 
         return df
 
