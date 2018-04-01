@@ -36,6 +36,26 @@ class recommender():
             return best_rule, dr_delta
         except:
             return None, None
+        
+    # приводим к бинарному виду данные и добавляем в список ролей
+    def New_rule_bin(self, full_onefactor_rules, data, types_and_roles, ch_rules, p_rule):
+        for rule in full_onefactor_rules:
+            name=rule[0]
+            thr=rule[1]
+            trend=rule[2]
+            n_name = 'ncr_' + name
+            if thr is not None:
+                data[n_name]=0
+                if trend:
+                    data.loc[data[name]>=thr,n_name]=1
+                else:
+                    data.loc[data[name]<thr,n_name]=1
+                var_description = VariableDescription(n_name)
+                var_description.type = VariableTypeEnum.Binary
+                var_description.role = VariableRoleEnum.POTENCIAL_RULE            
+                types_and_roles.append(var_description) 
+                ch_rules.append(var_description.name)
+                p_rule.append(var_description.name)
     
     #извллекает правила из дерева решений
     def _extractRules(self, tree, feature_names):

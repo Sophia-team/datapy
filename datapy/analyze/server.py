@@ -24,8 +24,8 @@ class server():
         return self._types_and_roles, self._missing
     
     def AnalyseMarkedData(self, data_markers):
-        self._data_desctiption, self._data_desctiption_m, self._one_factor, self._unique_factor, time=self._analyzer.analyse_marked_data(self._data, data_markers)
-        return self._data_desctiption, self._data_desctiption_m, self._one_factor, self._unique_factor, time
+        self._data_desctiption, self._data_desctiption_m, self._one_factor, self._unique_factor, time, self._ch_rules, self._p_rule=self._analyzer.analyse_marked_data(self._data, data_markers)
+        return self._data_desctiption, self._data_desctiption_m, self._one_factor, self._unique_factor, time, self._ch_rules, self._p_rule
     
     def FindCombinations(self):
         return self._analyzer.find_combinations()
@@ -73,6 +73,9 @@ class server():
             characteristic_columns=[tr.name for tr in self._types_and_roles if tr.role==VariableRoleEnum.VALUE_COLUMN]
           
         return self._recomender.RecommendMultiRules(self._data, characteristic_columns, target_field)
+    
+    def Bin_new_rules(self, full_onefactor_rules, ch_rules, p_rule):
+        return self._recomender.New_rule_bin(full_onefactor_rules, self._data, self._types_and_roles, ch_rules, p_rule)
     
     
     

@@ -87,7 +87,7 @@ class analyser():
         unique_factor_data = unique_factor_data.loc[unique_factor_data['active_rules']==1]
         unique_factor_analysis = self._rules_stats(unique_factor_data, target, rules, approved, ntu, credited, new_credit, data.shape[0])
 
-        return data_desctiption, data_desctiption_m, one_factor_analysis, unique_factor_analysis, time
+        return data_desctiption, data_desctiption_m, one_factor_analysis, unique_factor_analysis, time, ch_rules, p_rule
 
     #Считаем статистику по всем комбинациям
     def find_combinations(self):
