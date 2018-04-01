@@ -97,9 +97,7 @@ class analyser():
         if self._input_data is None or self._input_data_markers is None:
             raise Exception('Необходимо предварительно провести анализ')
         
-        if not self._combinations is None:
-            return self._combinations
-        
+       
 
         target, dt_rep, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit = self._role_lists(self._input_data_markers) 
         data=self._input_data.copy()
