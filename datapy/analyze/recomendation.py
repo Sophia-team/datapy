@@ -38,7 +38,8 @@ class recommender():
             return None, None
         
     # приводим к бинарному виду данные и добавляем в список ролей
-    def New_rule_bin(self, full_onefactor_rules, data, types_and_roles, ch_rules, p_rule):
+    def New_rule_bin(self, full_onefactor_rules, data):
+        potential_rules=[]
         for rule in full_onefactor_rules:
             name=rule[0]
             thr=rule[1]
@@ -53,9 +54,9 @@ class recommender():
                 var_description = VariableDescription(n_name)
                 var_description.type = VariableTypeEnum.Binary
                 var_description.role = VariableRoleEnum.POTENCIAL_RULE            
-                types_and_roles.append(var_description) 
-                ch_rules.append(var_description.name)
-                p_rule.append(var_description.name)
+                potential_rules.append(var_description)
+        
+        return potential_rules
     
     #извллекает правила из дерева решений
     def _extractRules(self, tree, feature_names):

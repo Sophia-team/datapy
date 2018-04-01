@@ -74,8 +74,14 @@ class server():
           
         return self._recomender.RecommendMultiRules(self._data, characteristic_columns, target_field)
     
-    def Bin_new_rules(self, full_onefactor_rules, ch_rules, p_rule):
-        return self._recomender.New_rule_bin(full_onefactor_rules, self._data, self._types_and_roles, ch_rules, p_rule)
+    def Bin_new_rules(self, full_onefactor_rules):
+        #вызываем метод, применяющий правила к данным. Он генерирует новые столбцы и возарщает список добавленных переменных
+        potential_rules=self._recomender.New_rule_bin(full_onefactor_rules, self._data)
+        #добавляем список новых потенциальных данных к старому списку маркеров
+        self._analyzer._input_data_markers=self._analyzer._input_data_markers+potential_rules
+        #теперь наша аналайзер знает об этих правилах
+        #возвращаем на всякий случай полный список правил (маркеры разметки), который можно кинуть в анализатор повторно для получения полного анализа опять
+        return self._analyzer._input_data_markers,potential_rules
     
     
     
