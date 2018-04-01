@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import itertools as it
 import datetime
+import calendar
 
 class analyser():
     
@@ -51,7 +52,7 @@ class analyser():
     #Возвращает таблицу со статистикой по отказам и прочему
     def analyse_marked_data(self, data, data_markers):
         self._input_data_markers=data_markers
-        target, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit = self._role_lists(data_markers) 
+        target, dt_rep, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit = self._role_lists(data_markers) 
         # корректный расчет approved
         if p_rule:
             data['app_res'] = 0
@@ -71,6 +72,9 @@ class analyser():
         
         #опсиательные по всем данным
         data_desctiption, k_dr =self._data_stats(data, target, approved, ntu, credited)
+        
+        #опсиательные по всем данным в разрезе дат
+        data_desctiption_m = self._data_stats_m(data, target, approved, ntu, credited, dt_rep)
 
         #однофакторные отказы
         one_factor_analysis = self._rules_stats(data, target, rules, approved, ntu, credited, new_credit)
@@ -83,7 +87,7 @@ class analyser():
         unique_factor_data = unique_factor_data.loc[unique_factor_data['active_rules']==1]
         unique_factor_analysis = self._rules_stats(unique_factor_data, target, rules, approved, ntu, credited, new_credit, data.shape[0])
 
-        return data_desctiption, one_factor_analysis, unique_factor_analysis, time
+        return data_desctiption, data_desctiption_m, one_factor_analysis, unique_factor_analysis, time
 
     #Считаем статистику по всем комбинациям
     def find_combinations(self):
@@ -97,7 +101,7 @@ class analyser():
             return self._combinations
         
 
-        target, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit = self._role_lists(self._input_data_markers) 
+        target, dt_rep, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit = self._role_lists(self._input_data_markers) 
         data=self._input_data.copy()
         
         data_desctiption, k_dr =self._data_stats(data, target, approved, ntu, credited)
@@ -194,7 +198,19 @@ class analyser():
             if not s in arr:
                 return False
         return True
-
+    
+    # конвертация в формат даты
+    def _convert_date(self, data, column):
+        if not data[column].dtypes == 'datetime64[ns]':
+            try:
+                data[column] = pd.to_datetime(data[column])
+            except ValueError:
+                raise ValueError("Incorrect data format, should be YYYY-MM-DD")
+            return data
+        else:
+            return data    
+    
+    # рассчет статистики по общей выборки
     def _data_stats(self, data, target, approved, ntu, credited):
         columns=['уровень одобрения (%)', 'уровень NTU (%)', 'дефолтность по одобренным (%)', 'дефолтность по выданным (%)']
         df = pd.DataFrame(columns=columns)    
@@ -212,6 +228,29 @@ class analyser():
 
         df.loc['Total']=[ar*100, ntu_rate*100, approved_dr*100, given_dr*100]
         return df, k_dr 
+    
+    
+     # рассчет статистики в разрезе дат
+    def _data_stats_m(self, data, target, approved, ntu, credited, dt_rep):
+        columns=['уровень одобрения (%)', 'уровень NTU (%)', 'дефолтность по одобренным (%)', 'дефолтность по выданным (%)']
+        df = pd.DataFrame(columns=columns) 
+        data = self._convert_date(data, dt_rep)
+        data['month_date'] = list(map(lambda x: x.replace(day = calendar.monthrange(x.year, x.month)[1]).date(), data[dt_rep]))
+        months = pd.Series(data['month_date'].unique())
+        for m in months:
+            
+            # Approve rate
+            ar = None if approved is None else data.loc[(data['month_date'] == m) ,approved].mean()
+            cnt_apr = None if approved is None else data.loc[(data['month_date'] == m) ,approved].sum()
+            # уровень NTU 
+            ntu_rate = None if ntu is None else data.loc[(data['month_date'] == m) ,ntu].sum()/float(cnt_apr)
+            # default rate among approved
+            approved_dr=None if (approved is None) or (target is None) else data.loc[(data[approved]==1) & (data['month_date'] == m),target].mean()  
+            # Дефолтность по выданным
+            given_dr=None if (credited is None) or (target is None) else data.loc[(data[credited]==1) & (data['month_date'] == m), target].mean() 
+
+            df.loc[m]=[ar*100, ntu_rate*100, approved_dr*100, given_dr*100]
+        return df 
 
     #считает статистики по правилам
     def _rules_stats(self, data, target, rules, approved, ntu, credited, new_credit, full_data_len=None):
@@ -245,6 +284,7 @@ class analyser():
     # возвращает списки имен по ролям
     def _role_lists(self, types_and_roles):
         target = None
+        dt_rep = None
         rules = list()
         fixed_rule = list()
         ch_rules = list()
@@ -258,6 +298,8 @@ class analyser():
         for i in range(0,len(types_and_roles)):
             if types_and_roles[i].role == VariableRoleEnum.TARGET:
                 target = types_and_roles[i].name
+            elif types_and_roles[i].role == VariableRoleEnum.DATE:
+                dt_rep = types_and_roles[i].name
             elif types_and_roles[i].role == VariableRoleEnum.APPROVED:
                 approved = types_and_roles[i].name
             elif types_and_roles[i].role == VariableRoleEnum.NTU:
@@ -278,7 +320,7 @@ class analyser():
                         ach_rules.append(types_and_roles[i].name)
                     else:
                         p_rule.append(types_and_roles[i].name)         
-        return target, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit
+        return target, dt_rep, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit
 
 
     #определяет тип переменной

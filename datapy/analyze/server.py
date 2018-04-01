@@ -24,8 +24,8 @@ class server():
         return self._types_and_roles, self._missing
     
     def AnalyseMarkedData(self, data_markers):
-        self._data_desctiption, self._one_factor, self._unique_factor, time=self._analyzer.analyse_marked_data(self._data, data_markers)
-        return self._data_desctiption, self._one_factor, self._unique_factor, time
+        self._data_desctiption, self._data_desctiption_m, self._one_factor, self._unique_factor, time=self._analyzer.analyse_marked_data(self._data, data_markers)
+        return self._data_desctiption, self._data_desctiption_m, self._one_factor, self._unique_factor, time
     
     def FindCombinations(self):
         return self._analyzer.find_combinations()
