@@ -24,8 +24,11 @@ class server():
         return self._types_and_roles, self._missing
     
     def AnalyseMarkedData(self, data_markers):
-        self._data_desctiption, self._data_desctiption_m, self._one_factor, self._unique_factor, time, self._ch_rules, self._p_rule=self._analyzer.analyse_marked_data(self._data, data_markers)
-        return self._data_desctiption, self._data_desctiption_m, self._one_factor, self._unique_factor, time, self._ch_rules, self._p_rule
+        self._data_desctiption, self._data_desctiption_m, self._one_factor, self._unique_factor, time, self._ch_rules, self._p_rule, self._const_column = self._analyzer.analyse_marked_data(self._data, data_markers)
+        return self._data_desctiption, self._data_desctiption_m, self._one_factor, self._unique_factor, time, self._ch_rules, self._p_rule, self._const_column
+    
+    def DelitMissing(self, missing, mis = 5):
+        self._analyzer.del_miss(self._data, missing, mis)
     
     def FindCombinations(self):
         return self._analyzer.find_combinations()

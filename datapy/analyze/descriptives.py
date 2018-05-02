@@ -86,8 +86,11 @@ class analyser():
             unique_factor_data['active_rules']+=unique_factor_data[rule]
         unique_factor_data = unique_factor_data.loc[unique_factor_data['active_rules']==1]
         unique_factor_analysis = self._rules_stats(unique_factor_data, target, rules, approved, ntu, credited, new_credit, data.shape[0])
+        
+        #список неудаляемых столбцов внезависимости от количества пропусков
+        const_column = [target, dt_rep, approved, ach_rules, ntu, credited, new_credit]
 
-        return data_desctiption, data_desctiption_m, one_factor_analysis, unique_factor_analysis, time, ch_rules, p_rule
+        return data_desctiption, data_desctiption_m, one_factor_analysis, unique_factor_analysis, time, ch_rules, p_rule, const_column
 
     #Считаем статистику по всем комбинациям
     def find_combinations(self):
@@ -174,6 +177,14 @@ class analyser():
         fitting_combinations=rules_combinations.loc[rules_combinations[ar_column]>=param_min_ar]
         #сортируем отобранные комбинации по DR по возрастанию
         return fitting_combinations.sort_values(by=dr_column,ascending=True)
+    
+    #удаляем столбцы с количеством пропусков выше заданного
+    def del_miss(self, data, missing, mis):
+        rej = []
+        for i in missing.loc[missing['% пропущенных'] > mis, :].index:
+            if i not in const_column:
+                rej.append(i)
+        data.drop(rej, axis=1, inplace=True)
 
 
     ###################################################
