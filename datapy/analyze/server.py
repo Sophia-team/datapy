@@ -1,3 +1,5 @@
+import re
+
 class server():
     def __init__(self):
         self._analyzer=analyser()
@@ -85,6 +87,30 @@ class server():
         #теперь наша аналайзер знает об этих правилах
         #возвращаем на всякий случай полный список правил (маркеры разметки), который можно кинуть в анализатор повторно для получения полного анализа опять
         return self._analyzer._input_data_markers,potential_rules
+    
+    
+    #Парсинг правила
+    def ParseRule(self, user_rule):
+        or_rules=user_rule.split('OR')
+        and_rules=list()
+        for or_rule in or_rules:
+            and_rules.append(or_rule.split('AND'))
+
+        def _parseStatement(statement):
+            sign=re.findall('<=|>', statement)[0]
+            args=re.split(sign,statement)
+            rule=[args[0].strip(), args[1].strip(), True if sign=='>' else False]
+            return rule
+
+        formal_rules=list()
+        for and_rule in and_rules:
+            and_rule_formal=list()
+            for rule_part in and_rule:
+                formal_rule=_parseStatement(rule_part)
+                and_rule_formal.append(formal_rule)
+            formal_rules.append(and_rule_formal)
+
+        return formal_rules
     
     
     
