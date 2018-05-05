@@ -100,7 +100,7 @@ class analyser():
         
        
 
-        target, dt_rep, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit = self._role_lists(self._input_data_markers) 
+        target, dt_rep, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit, val_columns = self._role_lists(self._input_data_markers) 
         data=self._input_data.copy()
         
         data_desctiption, k_dr =self._data_stats(data, target, approved, ntu, credited)
