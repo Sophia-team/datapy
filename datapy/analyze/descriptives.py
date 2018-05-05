@@ -50,7 +50,7 @@ class analyser():
     #Возвращает таблицу со статистикой по отказам и прочему
     def analyse_marked_data(self, data, data_markers):
         self._input_data_markers=data_markers
-        target, dt_rep, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit = self._role_lists(data_markers) 
+        target, dt_rep, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit, val_columns = self._role_lists(data_markers) 
         # корректный расчет approved
         if p_rule:
             data['app_res'] = 0
@@ -88,7 +88,7 @@ class analyser():
         #список неудаляемых столбцов внезависимости от количества пропусков
         self._const_columns = [target, dt_rep, approved, ach_rules, ntu, credited, new_credit]
 
-        return data_desctiption, data_desctiption_m, one_factor_analysis, unique_factor_analysis, time, ch_rules, p_rule, self._const_columns
+        return data_desctiption, data_desctiption_m, one_factor_analysis, unique_factor_analysis, time, ch_rules, p_rule, self._const_columns, val_columns
 
     #Считаем статистику по всем комбинациям
     def find_combinations(self):
@@ -309,6 +309,7 @@ class analyser():
         ach_rules = list()
         h_rule = list()
         p_rule = list()
+        val_columns=list()
         approved = None
         ntu = None
         credited = list()
@@ -326,6 +327,8 @@ class analyser():
                 credited = types_and_roles[i].name
             elif types_and_roles[i].role == VariableRoleEnum.NEW_CREDIT:
                 new_credit = types_and_roles[i].name
+            elif types_and_roles[i].role == VariableRoleEnum.VALUE_COLUMN:
+                val_columns.append(types_and_roles[i].name)
             elif types_and_roles[i].role == VariableRoleEnum.FIXED_RULE or types_and_roles[i].role == VariableRoleEnum.HISTORICAL_RULE or types_and_roles[i].role == VariableRoleEnum.POTENCIAL_RULE:
                 rules.append(types_and_roles[i].name)
                 if types_and_roles[i].role == VariableRoleEnum.FIXED_RULE:
@@ -338,7 +341,7 @@ class analyser():
                         ach_rules.append(types_and_roles[i].name)
                     else:
                         p_rule.append(types_and_roles[i].name)         
-        return target, dt_rep, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit
+        return target, dt_rep, rules, fixed_rule,  approved, ch_rules, ach_rules, h_rule, p_rule, ntu, credited, new_credit, val_columns
 
 
     #определяет тип переменной

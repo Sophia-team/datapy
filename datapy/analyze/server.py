@@ -25,8 +25,8 @@ class server():
         return types_and_roles, missing
     
     def AnalyseMarkedData(self, data_markers):
-        data_desctiption, data_desctiption_m, one_factor, unique_factor, time, ch_rules, p_rule, const_column = self._analyzer.analyse_marked_data(self._data, data_markers)
-        return data_desctiption, data_desctiption_m, one_factor, unique_factor, time, ch_rules, p_rule, const_column
+        data_desctiption, data_desctiption_m, one_factor, unique_factor, time, ch_rules, p_rule, const_columns = self._analyzer.analyse_marked_data(self._data, data_markers)
+        return data_desctiption, data_desctiption_m, one_factor, unique_factor, time, ch_rules, p_rule, const_columns
     
     def DeleteMissing(self, missing_threshold=0.05):
         return self._analyzer.delete_missing(missing_threshold)
