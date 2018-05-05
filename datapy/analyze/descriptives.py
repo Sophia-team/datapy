@@ -10,6 +10,7 @@ class analyser():
         self._input_data=None
         self._input_data_markers=None
         self._combinations=None
+        self._const_columns=None
 
         
         
@@ -28,21 +29,18 @@ class analyser():
     def types_and_roles_prediction(self, data, delimiter=';', decimal='.', encoding='utf-8'):
         try:
             result=list()
-            ind = list(data.columns)
-            columns = ['# пропущенных', '% пропущенных']
-            miss = pd.DataFrame(columns=columns)
             for column in data.columns:
                 var_description=VariableDescription(column)
                 var_description.type=self._predict_type(data[column])
                 var_description.role=self._predict_role(data[column])            
                 result.append(var_description)
 
-            cnt = float(data.iloc[:,0].count())
-            for i in ind:
-                cnt_mis = data[i].isnull().sum()
-                pr_mis = data[i].isnull().sum()/ cnt *100
-                miss.loc[i] = [cnt_mis, pr_mis]
-            return result, miss
+            missings = pd.DataFrame()
+            total_length=data.shape[0]
+            missings['# пропущенных'] = total_length - s._data.count()            
+            missings['% пропущенных'] = (1 - s._data.count() / total_length) * 100
+
+            return result, missings
         except:
             #TODO подумать, что тут можно делать
             raise
@@ -88,9 +86,9 @@ class analyser():
         unique_factor_analysis = self._rules_stats(unique_factor_data, target, rules, approved, ntu, credited, new_credit, data.shape[0])
         
         #список неудаляемых столбцов внезависимости от количества пропусков
-        const_column = [target, dt_rep, approved, ach_rules, ntu, credited, new_credit]
+        self._const_columns = [target, dt_rep, approved, ach_rules, ntu, credited, new_credit]
 
-        return data_desctiption, data_desctiption_m, one_factor_analysis, unique_factor_analysis, time, ch_rules, p_rule, const_column
+        return data_desctiption, data_desctiption_m, one_factor_analysis, unique_factor_analysis, time, ch_rules, p_rule, self._const_columns
 
     #Считаем статистику по всем комбинациям
     def find_combinations(self):
@@ -179,12 +177,23 @@ class analyser():
         return fitting_combinations.sort_values(by=dr_column,ascending=True)
     
     #удаляем столбцы с количеством пропусков выше заданного
-    def del_miss(self, data, missing, mis):
-        rej = []
-        for i in missing.loc[missing['% пропущенных'] > mis, :].index:
-            if i not in const_column:
-                rej.append(i)
-        data.drop(rej, axis=1, inplace=True)
+    def delete_missing(self, missing_threshold=0.05):
+
+        #список неудаляемых столбцов внезависимости от количества пропусков
+        const_column = self._const_columns
+        
+        total_length=self._input_data.shape[0]
+        missings=(1 - self._input_data.count() / total_length)
+        
+        columns_with_missings = [c for c in missings[missings>=missing_threshold].index.values if c not in const_column]
+        
+        #удаляем из спсика переменных
+        self._input_data_markers=[dm for dm in self._input_data_markers if dm.name not in columns_with_missings]
+        
+        # дропаем колонки
+        self._input_data.drop(columns_with_missings, axis=1, inplace=True)
+        
+        return columns_with_missings
 
 
     ###################################################

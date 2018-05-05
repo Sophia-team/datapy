@@ -4,7 +4,6 @@ class server():
     def __init__(self):
         self._analyzer=analyser()
         self._recomender=recommender()
-        self._types_and_roles=None
         self._data=None
         print('Server initialised')
     
@@ -22,15 +21,15 @@ class server():
         
         
     def PredictTypesAndRoles(self):
-        self._types_and_roles, self._missing=self._analyzer.types_and_roles_prediction(self._data)
-        return self._types_and_roles, self._missing
+        types_and_roles, missing=self._analyzer.types_and_roles_prediction(self._data)
+        return types_and_roles, missing
     
     def AnalyseMarkedData(self, data_markers):
-        self._data_desctiption, self._data_desctiption_m, self._one_factor, self._unique_factor, time, self._ch_rules, self._p_rule, self._const_column = self._analyzer.analyse_marked_data(self._data, data_markers)
-        return self._data_desctiption, self._data_desctiption_m, self._one_factor, self._unique_factor, time, self._ch_rules, self._p_rule, self._const_column
+        data_desctiption, data_desctiption_m, one_factor, unique_factor, time, ch_rules, p_rule, const_column = self._analyzer.analyse_marked_data(self._data, data_markers)
+        return data_desctiption, data_desctiption_m, one_factor, unique_factor, time, ch_rules, p_rule, const_column
     
-    def DelitMissing(self, missing, mis = 5):
-        self._analyzer.del_miss(self._data, missing, mis)
+    def DeleteMissing(self, missing_threshold=0.05):
+        return self._analyzer.delete_missing(missing_threshold)
     
     def FindCombinations(self):
         return self._analyzer.find_combinations()
@@ -49,33 +48,33 @@ class server():
     #Блок генератора правил
     
     def RecomendOneFactorRules(self, characteristic_columns=[]):
-        if self._types_and_roles is None:
+        if self._analyzer._input_data_markers is None:
             raise Exception('Предварительно необходимо проанализировать столбцы и присвоить им роли методом AnalyseMarkedData')
         
-        potential_targets=[tr for tr in self._types_and_roles if tr.role==VariableRoleEnum.TARGET]
+        potential_targets=[tr for tr in self._analyzer._input_data_markers if tr.role==VariableRoleEnum.TARGET]
         
         if not len(potential_targets)==1:
             raise Exception('Целевой столбец не задан')
         target_field=potential_targets[0].name
         #если пользователь не передал значений, анализируем всё
         if len(characteristic_columns)==0:
-            characteristic_columns=[tr.name for tr in self._types_and_roles if tr.role==VariableRoleEnum.VALUE_COLUMN]
+            characteristic_columns=[tr.name for tr in self._analyzer._input_data_markers if tr.role==VariableRoleEnum.VALUE_COLUMN]
             
         return self._recomender.RecommendRules(self._data, characteristic_columns, target_field)
     
     
     def RecomendMultyFactorRules(self, characteristic_columns=[]):
-        if self._types_and_roles is None:
+        if self._analyzer._input_data_markers is None:
             raise Exception('Предварительно необходимо проанализировать столбцы и присвоить им роли методом AnalyseMarkedData')
         
-        potential_targets=[tr for tr in self._types_and_roles if tr.role==VariableRoleEnum.TARGET]
+        potential_targets=[tr for tr in self._analyzer._input_data_markers if tr.role==VariableRoleEnum.TARGET]
         
         if not len(potential_targets)==1:
             raise Exception('Целевой столбец не задан')
         target_field=potential_targets[0].name
         #если пользователь не передал значений, анализируем всё
         if len(characteristic_columns)==0:            
-            characteristic_columns=[tr.name for tr in self._types_and_roles if tr.role==VariableRoleEnum.VALUE_COLUMN]
+            characteristic_columns=[tr.name for tr in self._analyzer._input_data_markers if tr.role==VariableRoleEnum.VALUE_COLUMN]
           
         return self._recomender.RecommendMultiRules(self._data, characteristic_columns, target_field)
     
