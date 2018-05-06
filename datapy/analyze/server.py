@@ -43,6 +43,16 @@ class server():
     def OptimezeRulesAR(self, param_min_ar, dr_column='DR', ar_column='AR'):
         return self._analyzer.optimize_rules_ar(param_min_ar, dr_column, ar_column)
     
+    #Кодировка категориальных столбцов
+    def EncodeCategories(self, categories):
+        result = {}
+        for c in categories:
+            if self._data[c].dtype == 'O':
+                result[c] = {v : i for i, v in enumerate(self._data[c].unique())}
+                for i, v in enumerate(self._data[c].unique()):
+                    self._data.loc[self._data[c] == v, c] = i
+        return result
+    
     
     
     #Блок генератора правил
@@ -98,7 +108,7 @@ class server():
         def _parseStatement(statement):
             sign=re.findall('<=|>', statement)[0]
             args=re.split(sign,statement)
-            rule=[args[0].strip(), args[1].strip(), True if sign=='>' else False]
+            rule=[args[0].strip(), float(args[1].strip()), True if sign=='>' else False]
             return rule
 
         formal_rules=list()
