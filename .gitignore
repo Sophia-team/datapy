@@ -1,3 +1,4 @@
+data/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -99,3 +100,4 @@ ENV/
 
 # mypy
 .mypy_cache/
+Role and Type Selector-Copy1.ipynb
