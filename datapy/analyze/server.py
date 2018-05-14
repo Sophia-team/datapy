@@ -29,7 +29,8 @@ class server():
         return data_desctiption, data_desctiption_m, one_factor, unique_factor, time, ch_rules, p_rule, const_columns, val_columns
     
     def DeleteMissing(self, missing_threshold=0.05):
-        return self._analyzer.delete_missing(missing_threshold)
+        self._data, deleted_columns = self._analyzer.delete_missing(missing_threshold)
+        return deleted_columns
     
     def FindCombinations(self):
         return self._analyzer.find_combinations()
@@ -62,20 +63,31 @@ class server():
             raise Exception('Предварительно необходимо проанализировать столбцы и присвоить им роли методом AnalyseMarkedData')
         
         potential_targets=[tr for tr in self._analyzer._input_data_markers if tr.role==VariableRoleEnum.TARGET]
+        approve_flags=[tr for tr in self._analyzer._input_data_markers if tr.role==VariableRoleEnum.APPROVED]
         
         if not len(potential_targets)==1:
             raise Exception('Целевой столбец не задан')
         target_field=potential_targets[0].name
+        
+
+        if len(approve_flags) == 1:
+            approve_field=approve_flags[0].name
+        else:
+            approve_field = None
+        
         #если пользователь не передал значений, анализируем всё
         if len(characteristic_columns)==0:
             characteristic_columns=[tr.name for tr in self._analyzer._input_data_markers if tr.role==VariableRoleEnum.VALUE_COLUMN]
             
-        return self._recomender.RecommendRules(self._data, characteristic_columns, target_field)
+        return self._recomender.RecommendRules(self._data, characteristic_columns, target_field, approve_field)
     
     
     def RecomendMultyFactorRules(self, characteristic_columns=[]):
         if self._analyzer._input_data_markers is None:
             raise Exception('Предварительно необходимо проанализировать столбцы и присвоить им роли методом AnalyseMarkedData')
+        if len(characteristic_columns)>0:
+            if len(set(characteristic_columns))==1:
+                raise Exception('Для поиска мультправил, необходимо выбрать больше, чем одно поле')
         
         potential_targets=[tr for tr in self._analyzer._input_data_markers if tr.role==VariableRoleEnum.TARGET]
         

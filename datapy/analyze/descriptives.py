@@ -193,7 +193,7 @@ class analyser():
         # дропаем колонки
         self._input_data.drop(columns_with_missings, axis=1, inplace=True)
         
-        return columns_with_missings
+        return self._input_data, columns_with_missings
 
 
     ###################################################

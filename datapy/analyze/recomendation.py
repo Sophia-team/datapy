@@ -11,26 +11,38 @@ class recommender():
         pass
 
        
-    def RecommendRules(self, data, characteristic_columns, default_flag):
+    def RecommendRules(self, data, characteristic_columns, default_flag, approve_flag):
         result=list()
         for column in characteristic_columns:
             one_factor_data=data[[column, default_flag]].dropna()
+            if not approve_flag == None:
+                one_factor_data=data[[column, default_flag, approve_flag]].dropna()
             gaps=self._GetRule(one_factor_data[column], one_factor_data[default_flag])
             one_factor_threshold=self._GetThreshold(gaps)
-            trend, new_dr =self._GetTrend(one_factor_data[column], one_factor_data[default_flag], one_factor_threshold)
-            old_dr=data[default_flag].mean()            
+            
+            
+            trend, new_dr=self._GetTrend(one_factor_data[column], one_factor_data[default_flag], one_factor_threshold)
+            old_dr=one_factor_data[default_flag].mean()  
             dr_delta=0 if new_dr is None else old_dr-new_dr
-            result.append([column, one_factor_threshold,trend, dr_delta])
+            
+            
+            if not approve_flag == None:
+                ar_trend, new_ar=self._GetTrend(one_factor_data[column], one_factor_data[approve_flag], one_factor_threshold)
+                old_ar=one_factor_data[approve_flag].mean()  
+                ar_delta=0 if new_ar is None else new_ar-old_ar
+              
+            result.append([column, one_factor_threshold,trend, dr_delta, ar_delta])
         return result
     
     def RecommendMultiRules(self, data, characteristic_columns, default_flag):
         result=list()
         multi_factor_data=data[characteristic_columns+[default_flag]].dropna()
+                   
         try:
             dt, best_node, best_node_dr = self._GetMultiRule(multi_factor_data, default_flag)  
             rules=self._extractRules(dt,characteristic_columns)
             best_rule=self._findRule(rules,best_node)
-            old_dr=data[default_flag].mean()
+            old_dr=multi_factor_data[default_flag].mean()
             new_dr=best_node_dr
             dr_delta=0 if new_dr is None else old_dr-new_dr
             return best_rule, dr_delta
@@ -97,10 +109,6 @@ class recommender():
         max_dr_node=node_dr.argmax()
                
         return dt, max_dr_node, node_dr[max_dr_node]
-        pass
-    
-    
-    
     
 
     def _GetRule(self, x, y, depth=1):
@@ -123,7 +131,7 @@ class recommender():
         if threshold is None:
             return None, None
         left_rate=np.mean([y_v for x_v, y_v  in zip(x,y) if x_v<=threshold])
-        right_rate=np.mean([y_v for x_v, y_v  in zip(x,y) if x_v>threshold])  
+        right_rate=np.mean([y_v for x_v, y_v  in zip(x,y) if x_v>threshold]) 
         return right_rate>=left_rate, min(left_rate, right_rate)
 
 
