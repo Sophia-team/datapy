@@ -104,7 +104,12 @@ class server():
         #вызываем метод, применяющий правила к данным. Он генерирует новые столбцы и возарщает список добавленных переменных
         potential_rules=self._recomender.New_rule_bin(full_onefactor_rules, self._data)
         #добавляем список новых потенциальных данных к старому списку маркеров
-        self._analyzer._input_data_markers=self._analyzer._input_data_markers+potential_rules
+        nam = []
+        for i in range(len(self._analyzer._input_data_markers)):
+            nam.append(self._analyzer._input_data_markers[i].name)
+        for p_r in potential_rules:
+            if p_r.name not in nam:
+                self._analyzer._input_data_markers.append(p_r)
         #теперь наша аналайзер знает об этих правилах
         #возвращаем на всякий случай полный список правил (маркеры разметки), который можно кинуть в анализатор повторно для получения полного анализа опять
         return self._analyzer._input_data_markers,potential_rules
