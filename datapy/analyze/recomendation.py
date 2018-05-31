@@ -70,6 +70,38 @@ class recommender():
         
         return potential_rules
     
+    def NewMultyfactorBin(self, multyfactor_rule, data):
+        #мультиправило отработало по 2 столбцам
+        if len(multyfactor_rule)==3:
+            first_part_name=multyfactor_rule[0][0]
+            first_part_sign=multyfactor_rule[0][1]
+            first_part_thr=multyfactor_rule[0][2]
+            
+            second_part_name=multyfactor_rule[1][0]
+            second_part_sign=multyfactor_rule[1][1]
+            second_part_thr=multyfactor_rule[1][2]
+            
+            ncr_name="ncr_{}_{}".format(first_part_name,second_part_name)
+            
+            var_description = VariableDescription(ncr_name)
+            var_description.type = VariableTypeEnum.Binary
+            var_description.role = VariableRoleEnum.POTENCIAL_RULE            
+            
+            data[ncr_name]=0           
+            if first_part_sign=="<=" and second_part_sign=="<=":
+                data.loc[ (data[first_part_name]<=float(first_part_thr)) & (data[second_part_name]<=float(second_part_thr)), ncr_name] = 1
+            elif first_part_sign=="<=" and second_part_sign==">":
+                data.loc[ (data[first_part_name]<=float(first_part_thr)) & (data[second_part_name]>float(second_part_thr)), ncr_name] = 1
+            elif first_part_sign==">" and second_part_sign=="<=":
+                data.loc[ (data[first_part_name]>float(first_part_thr)) & (data[second_part_name]<=float(second_part_thr)), ncr_name] = 1
+            elif first_part_sign==">" and second_part_sign==">":
+                data.loc[ (data[first_part_name]>float(first_part_thr)) & (data[second_part_name]>float(second_part_thr)), ncr_name] = 1
+            else:
+                raise Exception ('Rule damaged')
+                
+            return [var_description]
+            
+    
     #извллекает правила из дерева решений
     def _extractRules(self, tree, feature_names):
         tree_ = tree.tree_

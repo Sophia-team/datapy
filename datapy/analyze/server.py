@@ -100,9 +100,9 @@ class server():
           
         return self._recomender.RecommendMultiRules(self._data, characteristic_columns, target_field)
     
-    def Bin_new_rules(self, full_onefactor_rules):
+    def BinOneFactorRules(self, onefactor_rules):
         #вызываем метод, применяющий правила к данным. Он генерирует новые столбцы и возарщает список добавленных переменных
-        potential_rules=self._recomender.New_rule_bin(full_onefactor_rules, self._data)
+        potential_rules=self._recomender.New_rule_bin(onefactor_rules, self._data)
         #добавляем список новых потенциальных данных к старому списку маркеров
         nam = []
         for i in range(len(self._analyzer._input_data_markers)):
@@ -114,6 +114,18 @@ class server():
         #возвращаем на всякий случай полный список правил (маркеры разметки), который можно кинуть в анализатор повторно для получения полного анализа опять
         return self._analyzer._input_data_markers,potential_rules
     
+    def BinMultyFactorRule(self, multyfactor_rule):
+        #вызываем метод, применяющий правила к данным. Он генерирует новые столбцы и возарщает список добавленных переменных
+        potential_rules = self._recomender.NewMultyfactorBin(multyfactor_rule, self._data)
+        nam = []
+        for i in range(len(self._analyzer._input_data_markers)):
+            nam.append(self._analyzer._input_data_markers[i].name)
+        for p_r in potential_rules:
+            if p_r.name not in nam:
+                self._analyzer._input_data_markers.append(p_r)
+        return self._analyzer._input_data_markers, potential_rules
+        #potential_rules=self._recomender.NewMultyfactorBin(multyfactor_rule, self._data)
+        
     
     #Парсинг правила
     def ParseRule(self, user_rule):
